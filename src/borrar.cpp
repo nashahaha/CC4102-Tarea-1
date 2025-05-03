@@ -2,8 +2,12 @@
 #include <iostream>
 #include <fstream>
 
+/*
+Este archivo es para hacer pequeñas pruebas de ciertos pedazos de codigo para verifiacr si funcionan como se espera
+*/
 
-int test_write_in_file(){
+
+int main(){
     
     const std::string &outputFileName = "outputtest.bin"; //CAMBIAR NOMBRE
     std::ofstream outputFile(outputFileName, std::ios::binary); // abre archivo de salida 
@@ -26,7 +30,16 @@ int test_write_in_file(){
     std::ifstream inputFile1("outputtest.bin", std::ios::binary); // abre archivo 1
     std::cout <<"hola\n";
     std::vector<int> buffer1(6);
-    inputFile1.read(reinterpret_cast<char*>(buffer1.data()), 6*sizeof(int)); //preocuparse del caso donde no calzan perfecto
+
+
+    inputFile1.read(reinterpret_cast<char*>(buffer1.data()), 10 * sizeof(int));
+    std::streamsize bytesRead2 = inputFile1.gcount();
+    int Buff1Size = bytesRead2 / sizeof(int);
+    buffer1.resize(Buff1Size);
+
+    std::cout << "Tamaño: " << Buff1Size<< "\n";
+    std::cout << buffer1.size();
+    
     std::cout <<"hola2\n";
     for (auto i : buffer1)
             std::cout << i << " ";

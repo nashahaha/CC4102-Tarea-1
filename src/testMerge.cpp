@@ -1,40 +1,57 @@
-#include <vector>
+// Se incluyen todas las funciones para hacer los test para merge
+
 #include <iostream>
 #include <fstream>
-#include "../include/mergetest.hpp"
+#include <string>
+#include <vector>
 
-size_t B = 1024; //DETERMINAR BIEN
 
-void readBinFile(const std::string &filename){
-    std::ifstream inputFile(filename, std::ios::binary); // abre archivo 1
-    
-    if (!inputFile) {
+bool isBinaryFileSorted(const std::string& filename) {
+    std::ifstream infile(filename, std::ios::binary);
+    if (!infile) {
         std::cerr << "Error: could not open file '" << filename << "' for reading.\n";
-        exit(1);
+        return false;
     }
 
-    // Get file size
-    inputFile.seekg(0, std::ios::end);
-    std::streamsize fileSize = inputFile.tellg();
-    inputFile.seekg(0, std::ios::beg);
+    int prev, current;
+    if (!infile.read(reinterpret_cast<char*>(&prev), sizeof(int))) {
+        // File is empty or unreadable → consider it sorted
+        return true;
+    }
 
-    // Determine number of ints
-    size_t numInts = fileSize / sizeof(int);
-    
-    std::vector<int> buffer(numInts);
+    while (infile.read(reinterpret_cast<char*>(&current), sizeof(int))) {
+        if (current < prev) {
+            return false;  // Not sorted
+        }
+        prev = current;
+    }
 
-    // Read data
-    if (!inputFile.read(reinterpret_cast<char*>(buffer.data()), fileSize)) {
-        std::cerr << "Error reading file\n";
+    return true;
+}
+
+
+void generateSortedBinaryFile(const std::string& filename, size_t sizeKB, int start = 0, int step = 1) {
+    size_t totalBytes = sizeKB * 1024;
+    size_t numIntegers = totalBytes / sizeof(int);
+
+    std::ofstream outfile(filename, std::ios::binary);
+    if (!outfile) {
+        std::cerr << "Error: could not open file for writing.\n";
         return;
     }
 
-    // Print contents
-    for (int val : buffer) {
-        std::cout << val << " ";
+    int current = start;
+    for (size_t i = 0; i < numIntegers; ++i) {
+        outfile.write(reinterpret_cast<const char*>(&current), sizeof(int));
+        current += step;
     }
-    std::cout << "\n";
+
+    outfile.close();
+    std::cout << "Sorted file '" << filename << "' created with " << numIntegers << " integers (" << sizeKB << " KB).\n";
 }
+
+size_t B = 1024;
+
 
 std::string mergeFiles(const std::string &filename1, const std::string &filename2, const std::string &outputFileName){
     
@@ -181,37 +198,31 @@ std::string mergeFiles(const std::string &filename1, const std::string &filename
     
 }
 
-
-
-std::string extMergeSort(const std::string &filename, int M){
-    size_t fileSize = 0; // determinar tamaño del archivo
-    // si fileSize <M 
-    // Se ordena todo en memoria principal
-
-    // sino
-    // determinar aridad
-
-    // particionar archivo según la aridad
-
-    // para cada sub-archivo
-        // extMergeSort()
-
-    // invocar mergeFiles()
-
-    return ""; //retornar nombre del archivo ordenado
-}
-
 int main(){
+    std::cout << "Creamos archivos aleatorios para hacer las pruebas\n";
 
-    //mergeFiles("../bin/sorted1.bin", "../bin/sorted2.bin", "../bin/merged12.bin"); // para probar
-    //mergeFiles("../bin/sorted1.bin", "../bin/sorted1.bin", "../bin/merged11.bin");
-    //mergeFiles("../bin/sorted2.bin", "../bin/sorted2.bin", "../bin/merged22.bin");
+    generateSortedBinaryFile("../bin/sorted1T1.bin", 20, 392, 12);             // 10 KB sorted file, start at 0, step 1
+    generateSortedBinaryFile("../bin/sorted2T1.bin", 25, 120, 5);
 
     mergeFiles("../bin/sorted1T1.bin", "../bin/sorted2T1.bin", "../bin/mergedT1.bin");
 
-    return 1;
+    bool isT1Sorted = isBinaryFileSorted("../bin/mergedT1.bin");
 
+    if(isT1Sorted)
+        std::cout << "T1 aprobado\n";
+    else
+        std::cout << "T1 desaprobado\n";
+    
+
+    generateSortedBinaryFile("../bin/sorted1T2.bin", 51, 30, 12);             // 10 KB sorted file, start at 0, step 1
+    generateSortedBinaryFile("../bin/sorted2T2.bin", 45, 120, 5);
+
+    mergeFiles("../bin/sorted1T2.bin", "../bin/sorted2T2.bin", "../bin/mergedT2.bin");
+
+    bool isT2Sorted = isBinaryFileSorted("../bin/mergedT2.bin");
+
+    if(isT2Sorted)
+        std::cout << "T2 aprobado\n";
+    else
+        std::cout << "T2 desaprobado\n";
 }
-
-
-
