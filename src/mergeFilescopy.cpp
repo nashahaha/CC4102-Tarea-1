@@ -1,43 +1,10 @@
 #include <vector>
 #include <iostream>
 #include <fstream>
-#include <filesystem>
-#include <algorithm>
+#include <string>
 
 size_t B = 1024; //DETERMINAR BIEN
 int INT_MAX = 99999999;
-
-void readBinFile(const std::string &filename){
-    std::ifstream inputFile(filename, std::ios::binary); // abre archivo 1
-    
-    if (!inputFile) {
-        std::cerr << "Error: could not open file '" << filename << "' for reading.\n";
-        exit(1);
-    }
-
-    // Get file size
-    inputFile.seekg(0, std::ios::end);
-    std::streamsize fileSize = inputFile.tellg();
-    inputFile.seekg(0, std::ios::beg);
-
-    // Determine number of ints
-    size_t numInts = fileSize / sizeof(int);
-    
-    std::vector<int> buffer(numInts);
-
-    // Read data
-    if (!inputFile.read(reinterpret_cast<char*>(buffer.data()), fileSize)) {
-        std::cerr << "Error reading file\n";
-        return;
-    }
-
-    // Print contents
-    for (int val : buffer) {
-        std::cout << val << " ";
-    }
-    std::cout << "\n";
-}
-
 
 struct Part {
     int id;
@@ -113,7 +80,7 @@ std::string mergeFiles(std::vector<std::string> partitions, const std::string &o
 
         bool are_buff_non_empty = true;
 
-
+        std::cout << "hola1\n";
 
         while(are_buff_non_empty){ 
             // Find the buffer with the smallest front element
@@ -130,6 +97,11 @@ std::string mergeFiles(std::vector<std::string> partitions, const std::string &o
                 }
             }
 
+            //if (min_index == -1) {
+            //    are_buff_non_empty = false;
+            //    std::cout << "hola5\n";
+            //    break;
+            //}
 
             // Update 'menor' with the smallest element
             menor = min_value;
@@ -146,6 +118,9 @@ std::string mergeFiles(std::vector<std::string> partitions, const std::string &o
                 
                 outputBuffer.clear();
                 outBuffSize = 0;   
+                std::cout << "Se escribio en el archivo de salida\n";
+                std::cout << "Quedan "<< partes[0].bufferSize <<" en 1\n";
+                std::cout << "Quedan "<< partes[1].bufferSize <<" en 2\n";
             } 
 
             for(auto& part : partes){
@@ -156,16 +131,16 @@ std::string mergeFiles(std::vector<std::string> partitions, const std::string &o
             }
         
         }
-    
+        std::cout << "hola3\n";
     }
 
-;
+    std::cout << "hola2\n";
 
     // En este punto todos los archivos ya se leyeron por completo excepto uno
     // Queda agregar todos los elementos del archivo restante al outputFile
 
     Part &p = partes.front();
-
+    std::cout << "quedan "<< partes.size() << " archivos por leer\n";
     while (p.bufferSize>0){
         int k = p.buffer.front(); // el primer elemento del buffer 1 es menor
         p.buffer.erase(p.buffer.begin()); // se elimina del buffer
@@ -173,7 +148,7 @@ std::string mergeFiles(std::vector<std::string> partitions, const std::string &o
 
         outputBuffer.push_back(k);
         outBuffSize++;
-
+        std::cout << "hola6\n";
 
         if (outBuffSize == B) {
             outputFile.write(reinterpret_cast<char*>(outputBuffer.data()), outputBuffer.size() * sizeof(int));
@@ -181,6 +156,7 @@ std::string mergeFiles(std::vector<std::string> partitions, const std::string &o
             outputBuffer.clear();
             outBuffSize = 0;
         } 
+        std::cout << "hola7\n";
 
         if (p.bufferSize==0){
             p.buffer.resize(B);
@@ -190,6 +166,8 @@ std::string mergeFiles(std::vector<std::string> partitions, const std::string &o
 
             if (p.bufferSize == 0) break; // Si no se ha llenado significa que no quedan más datos que sacar
         }
+
+        std::cout << "hola8\n";
     }
 
     outputFile.close();
@@ -203,87 +181,16 @@ std::string mergeFiles(std::vector<std::string> partitions, const std::string &o
     return outputFileName;
 }
 
-
-std::vector<std::string> partitionFile(const std::string& archivoOriginal, size_t bloqueSize) {
-    std::ifstream entrada(archivoOriginal, std::ios::binary);
-    std::vector<std::string> particiones;
-
-    if (!entrada) {
-        std::cerr << "No se pudo abrir el archivo de entrada\n";
-        exit(1);
-    }
-
-    std::vector<int> buffer(bloqueSize);
-    int parte = 0;
-
-    while (entrada) {
-        entrada.read(reinterpret_cast<char*>(buffer.data()), bloqueSize * sizeof(int));
-        size_t leidos = entrada.gcount() / sizeof(int);
-        if (leidos == 0) break;  // Nada más que leer
-
-        std::string nombreParte = "parte_" + std::to_string(parte++) + ".bin";
-        std::ofstream salida(nombreParte, std::ios::binary);
-        if (!salida) {
-            std::cerr << "No se pudo crear " << nombreParte << "\n";
-            break;
-        }
-
-        salida.write(reinterpret_cast<char*>(buffer.data()), leidos * sizeof(int));
-        salida.close();
-
-        particiones.push_back(nombreParte);  // Agregar el nombre a la lista
-    }
-
-    entrada.close();
-    return particiones;
-}
-
-
-// asumo que M (el tamaño de la memoria ram) se entrega en Megas
-std::string extMergeSort(const std::string &filename, int M, int a){
-    std::uintmax_t ram = M*1000000; // memoria ram en bytes
-    std::uintmax_t fileSize = std::filesystem::file_size(filename); // determinar tamaño del archivo
-    // si fileSize <M 
-    // Se ordena todo en memoria principal
-
-    if(fileSize<=ram){
-        std::vector<int> buffer(B); //inicializo un vector
-        std::ifstream inputFile(filename, std::ios::binary); //abro el archivo
-        inputFile.read(reinterpret_cast<char*>(buffer.data()), B * sizeof(int)); //lo leo en el buffer
-        std::sort (buffer.begin(), buffer.end()); // se ordena
-        //escribir en el archivo (o crear uno nuevo)
-        return filename; //retorna
-    }
-
-    // sino
-    // determinar aridad --> voy a asumir que me entregan la aridad
-
-    // particionar archivo según la aridad
-    std::vector particiones = partitionFile(filename, a);
-
-    for (auto particion : particiones){
-        extMergeSort(particion, M, a);
-    }
-
-    // invocar mergeFiles()
-    std::string orderedFile = mergeFiles(particiones, "output.bin");
-
-    return orderedFile; //retornar nombre del archivo ordenado
-}
-
 int main(){
+    std::vector<std::string> fileNames = {"../bin/sorted1.bin", "../bin/sorted2.bin"};
+    
+    mergeFiles(fileNames, "../bin/pruebaNewMerge.bin");
 
-    //mergeFiles("../bin/sorted1.bin", "../bin/sorted2.bin", "../bin/merged12.bin"); // para probar
-    //mergeFiles("../bin/sorted1.bin", "../bin/sorted1.bin", "../bin/merged11.bin");
-    //mergeFiles("../bin/sorted2.bin", "../bin/sorted2.bin", "../bin/merged22.bin");
+    std::vector<std::string> fileNames2 = {"../bin/sorted1T1.bin", "../bin/sorted2T1.bin"};
+    
+    mergeFiles(fileNames2, "../bin/pruebaNewMergeT1.bin");
 
-    //mergeFiles({"../bin/sorted1T1.bin", "../bin/sorted2T1.bin"}, "../bin/mergedT1.bin");
-
-    extMergeSort("../bin/unsorted.bin", 50, 5);
-
-    return 1;
-
+    std::vector<std::string> fileNames3 = {"../bin/sorted1T1.bin", "../bin/sorted2T1.bin", "../bin/sorted3.bin"};
+    
+    mergeFiles(fileNames3, "../bin/pruebaNewMergeT2.bin");
 }
-
-
-
