@@ -2,6 +2,14 @@
 #include <fstream>
 #include <string>
 
+/*
+Dice si  un archivo binario de enteros está ordenado.
+
+Para usar compilar con: g++ isBinSorted.cpp -o isSorted
+
+Para leer un archivo: ./isSorted <nombreArchivo>.bin
+*/
+
 bool isBinaryFileSorted(const std::string& filename) {
     std::ifstream infile(filename, std::ios::binary);
     if (!infile) {
@@ -25,13 +33,20 @@ bool isBinaryFileSorted(const std::string& filename) {
     return true;
 }
 
-int main(){
-    bool is_sorted = isBinaryFileSorted("merged11.bin") && isBinaryFileSorted("merged12.bin") && isBinaryFileSorted("merged22.bin");
+int main(int argc, char* argv[]){
+
+    if (argc < 2) {
+        std::cerr << "Usage: " << argv[0] << " <binary_file>\n";
+        return 1;
+    }
+    std::string filename = argv[1];
+
+    bool is_sorted = isBinaryFileSorted(filename);
     
     if(is_sorted == false)
-        std::cout << "hay un archivo desordenado\n";
+        std::cout << filename << " está desordenado\n";
     else
-        std::cout << "Los archivos están ordenados :)\n";
+        std::cout << filename << " está ordenado :)\n";
 
     return is_sorted;
 }

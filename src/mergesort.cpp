@@ -40,7 +40,7 @@ void readBinFile(const std::string &filename){
 
 
 struct Part {
-    int id;
+    int id; //util para debuggear
     std::string filename;
     std::ifstream* fileStr;
     std::vector<int> buffer;
@@ -56,8 +56,6 @@ std::string mergeFiles(std::vector<std::string> partitions, const std::string &o
         Part p;
         p.id = i;
         p.filename = partitions[i];
-
-        std::cout << p.filename << "\n";
 
         p.fileStr = new std::ifstream();
         p.fileStr->open(p.filename, std::ios::binary);
@@ -86,37 +84,35 @@ std::string mergeFiles(std::vector<std::string> partitions, const std::string &o
 
     int outBuffSize=0; // tamaño del buffer de salida
 
-    //bool has_file_rech_eof = false;
 
     while(partes.size()>1){
 
         for ( int i = 0; i<partes.size(); i++){ // Se llenan todos los buffer vacios
             Part &p = partes[i];
             
-            if (p.bufferSize == 0) {
+            if (p.bufferSize == 0 && p.fileStr->peek()!=EOF) {
                 p.buffer.resize(B);
                 p.fileStr->read(reinterpret_cast<char*>(p.buffer.data()), B * sizeof(int));
                 std::streamsize bytesRead1 = p.fileStr->gcount(); // entrega la cantidad de bytes efectivamenete leidos en la última operación
                 p.bufferSize = bytesRead1 / sizeof(int);
                 p.buffer.resize(p.bufferSize);
             }
+
         }
 
         
         for (auto it = partes.begin(); it != partes.end(); ) {
-            if (it->bufferSize == 0 ) {
+            if (it->bufferSize == 0 && it->fileStr->peek()==EOF) {
                 it = partes.erase(it);  // si despues de llenar los buffer sigue vacío lo eliminamos
+                
             } else {
-                ++it;
+                it++;
             }
         }
 
         bool are_buff_non_empty = true;
 
-
-
         while(are_buff_non_empty){ 
-            // Find the buffer with the smallest front element
             int menor;
             int min_value = INT_MAX;
             int min_index = -1;
@@ -126,19 +122,17 @@ std::string mergeFiles(std::vector<std::string> partitions, const std::string &o
                 if (!partes[i].buffer.empty() && partes[i].buffer.front() < min_value) {
                     min_value = partes[i].buffer.front();
                     min_index = i;
-                    //std::cout << "hola6\n";
                 }
             }
 
 
-            // Update 'menor' with the smallest element
-            menor = min_value;
+            //menor = min_value;
 
             // Remove the front element of the chosen buffer
             partes[min_index].buffer.erase(partes[min_index].buffer.begin());
             partes[min_index].bufferSize--;
             
-            outputBuffer.push_back(menor);
+            outputBuffer.push_back(min_value);
             outBuffSize++;
 
             if (outBuffSize == B) {
@@ -149,7 +143,7 @@ std::string mergeFiles(std::vector<std::string> partitions, const std::string &o
             } 
 
             for(auto& part : partes){
-                if (part.bufferSize==0){
+                if (part.bufferSize==0){ // si algún buffer se vacía detenemos la iteración para volver a llenarlo
                     are_buff_non_empty = false;
                     break;
                 }
@@ -159,14 +153,22 @@ std::string mergeFiles(std::vector<std::string> partitions, const std::string &o
     
     }
 
-;
-
     // En este punto todos los archivos ya se leyeron por completo excepto uno
     // Queda agregar todos los elementos del archivo restante al outputFile
 
-    Part &p = partes.front();
+    Part &p = partes.front(); // archivo restante (no se debe comparar con nadie)
 
-    while (p.bufferSize>0){
+    while (true){
+        if (p.bufferSize==0){
+            p.buffer.resize(B);
+            p.fileStr->read(reinterpret_cast<char*>(p.buffer.data()), B * sizeof(int));
+            p.bufferSize = p.fileStr->gcount() / sizeof(int);
+            p.buffer.resize(p.bufferSize); // Resize to actual data read
+
+            if (p.bufferSize == 0) break; // Si no se ha llenado significa que no quedan más datos que sacar
+            
+        }
+
         int k = p.buffer.front(); // el primer elemento del buffer 1 es menor
         p.buffer.erase(p.buffer.begin()); // se elimina del buffer
         p.bufferSize--;
@@ -176,30 +178,27 @@ std::string mergeFiles(std::vector<std::string> partitions, const std::string &o
 
 
         if (outBuffSize == B) {
-            outputFile.write(reinterpret_cast<char*>(outputBuffer.data()), outputBuffer.size() * sizeof(int));
+            outputFile.write(reinterpret_cast<char*>(outputBuffer.data()), B * sizeof(int));
             
             outputBuffer.clear();
             outBuffSize = 0;
         } 
 
-        if (p.bufferSize==0){
-            p.buffer.resize(B);
-            p.fileStr->read(reinterpret_cast<char*>(p.buffer.data()), B * sizeof(int));
-            p.bufferSize = p.fileStr->gcount() / sizeof(int);
-            p.buffer.resize(p.bufferSize); // Resize to actual data read
+    }
 
-            if (p.bufferSize == 0) break; // Si no se ha llenado significa que no quedan más datos que sacar
-        }
+    if (!outputBuffer.empty()) { //Agrega el ultimo bloque que queda (que no es necesariamente de tamaño B)
+        outputFile.write(reinterpret_cast<char*>(outputBuffer.data()), outputBuffer.size() * sizeof(int));
+        outputBuffer.clear();
     }
 
     outputFile.close();
     
-    for(auto& part: parts){
+    for(auto& part: parts){ // se cierran todos los archivos
         part.fileStr->close();
     }
 
-    std::cout << "El archivo " << outputFileName << " fue creado\n";
-
+    std::cout << "El archivo ordenado " << outputFileName << " fue creado :)\n";
+    
     return outputFileName;
 }
 
@@ -243,15 +242,20 @@ std::vector<std::string> partitionFile(const std::string& archivoOriginal, size_
 std::string extMergeSort(const std::string &filename, int M, int a){
     std::uintmax_t ram = M*1000000; // memoria ram en bytes
     std::uintmax_t fileSize = std::filesystem::file_size(filename); // determinar tamaño del archivo
+    size_t numInts = fileSize / sizeof(int);
     // si fileSize <M 
     // Se ordena todo en memoria principal
 
-    if(fileSize<=ram){
-        std::vector<int> buffer(B); //inicializo un vector
-        std::ifstream inputFile(filename, std::ios::binary); //abro el archivo
-        inputFile.read(reinterpret_cast<char*>(buffer.data()), B * sizeof(int)); //lo leo en el buffer
+    if(fileSize<ram){
+        std::vector<int> buffer(numInts); //inicializo un vector del tamaño del archivo
+        std::fstream inputFile(filename, std::ios::in | std::ios::out | std::ios::binary); //abro el archivo
+        inputFile.read(reinterpret_cast<char*>(buffer.data()), numInts * sizeof(int)); //lo leo en el buffer
         std::sort (buffer.begin(), buffer.end()); // se ordena
+        
         //escribir en el archivo (o crear uno nuevo)
+        inputFile.seekp(0); // vuelve al principio del archivo para sobreescribirlo
+        inputFile.write(reinterpret_cast<char*>(buffer.data()), numInts * sizeof(int));
+
         return filename; //retorna
     }
 
@@ -273,13 +277,13 @@ std::string extMergeSort(const std::string &filename, int M, int a){
 
 int main(){
 
-    //mergeFiles("../bin/sorted1.bin", "../bin/sorted2.bin", "../bin/merged12.bin"); // para probar
-    //mergeFiles("../bin/sorted1.bin", "../bin/sorted1.bin", "../bin/merged11.bin");
-    //mergeFiles("../bin/sorted2.bin", "../bin/sorted2.bin", "../bin/merged22.bin");
+    //mergeFiles({"../bin/sorted1.bin", "../bin/sorted2.bin"}, "../bin/merged12.bin"); // para probar
+    //mergeFiles({"../bin/sorted1.bin", "../bin/sorted1.bin"}, "../bin/merged11.bin");
+    //mergeFiles({"../bin/sorted2.bin", "../bin/sorted2.bin"}, "../bin/merged22.bin");
 
-    //mergeFiles({"../bin/sorted1T1.bin", "../bin/sorted2T1.bin"}, "../bin/mergedT1.bin");
+    //mergeFiles({"../bin/sorted1T1.bin", "../bin/sorted2T1.bin", "../bin/sorted3.bin"}, "../bin/mergedT1.bin");
 
-    extMergeSort("../bin/unsorted.bin", 50, 5);
+    extMergeSort("../bin/unsorted2.bin", 1, 5);
 
     return 1;
 
