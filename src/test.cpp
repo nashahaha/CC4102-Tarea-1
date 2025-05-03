@@ -1,7 +1,60 @@
 #include <vector>
 #include <iostream>
+#include <fstream>
 
-int main(){
+
+int test_write_in_file(){
+    
+    const std::string &outputFileName = "outputtest.bin"; //CAMBIAR NOMBRE
+    std::ofstream outputFile(outputFileName, std::ios::binary); // abre archivo de salida 
+
+    std::vector<int> outputBuffer = {1,2,3,4,5,6};
+    int outBuffSize = 6;
+
+
+    for (size_t i = 0; i < 6; ++i) {
+        outputFile.write(reinterpret_cast<const char*>(&outputBuffer[i]), sizeof(int));
+        outBuffSize--;
+    }
+
+    //vaciar buffer
+    outputBuffer.clear();
+
+    outputFile.close();
+
+
+    std::ifstream inputFile1("outputtest.bin", std::ios::binary); // abre archivo 1
+    std::cout <<"hola\n";
+    std::vector<int> buffer1(6);
+    inputFile1.read(reinterpret_cast<char*>(buffer1.data()), 6*sizeof(int)); //preocuparse del caso donde no calzan perfecto
+    std::cout <<"hola2\n";
+    for (auto i : buffer1)
+            std::cout << i << " ";
+    std::cout << "\n";
+    std::cout <<"hola3\n";
+    return 1;
+}
+
+
+int test_2(){
+
+    int i1 = 0, i2 =0;
+    int B = 5;
+    int j1;
+    int j2 = B-i2;
+
+    while(j1>0 ){ //VER CASO EN QUE TIENEN TAMAÑOS DISTINTOS
+
+        j1 = B-i1;
+        std::cout << j1 << "\n";
+        i1--;
+
+    }
+    return 1;
+}
+
+
+int test_1(){
       
     std::vector<int> buffer1 = {2, 5, 8, 12}; 
     //buffer1.resize(B); // e.g., BUFFER_SIZE = 1024 or whatever you want

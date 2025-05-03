@@ -26,12 +26,12 @@ bool isBinaryFileSorted(const std::string& filename) {
 }
 
 int main(){
-    bool is_sorted = isBinaryFileSorted("sorted.bin");
+    bool is_sorted = isBinaryFileSorted("merged11.bin") && isBinaryFileSorted("merged12.bin") && isBinaryFileSorted("merged22.bin");
     
     if(is_sorted == false)
-        std::cout << "El archivo está desordenado\n";
+        std::cout << "hay un archivo desordenado\n";
     else
-        std::cout << "El archivo está ordenado:)\n";
+        std::cout << "Los archivos están ordenados :)\n";
 
     return is_sorted;
 }

@@ -4,7 +4,7 @@
 
 size_t B = 1024; //DETERMINAR BIEN
 
-std::string mergeFiles(const std::string &filename1, const std::string &filename2){
+std::string mergeFiles(const std::string &filename1, const std::string &filename2, const std::string &outputFileName){
     
 
     //abrir archivos
@@ -29,96 +29,109 @@ std::string mergeFiles(const std::string &filename1, const std::string &filename
 
     std::vector<int> outputBuffer;
 
-    const std::string &outputFileName = "outputfile.bin"; //CAMBIAR NOMBRE
-
     std::ofstream outputFile(outputFileName, std::ios::binary); // abre archivo de salida 
 
-    int i1 = B, i2 = B, out_i=0; //indice del primer elemento del buffer, sirve para solo vaciar el buffer una vez
-    //int f1 = 0, f2 = 0;
+    int Buff1Size = 0, Buff2Size = 0, outBuffSize=0; // tamaño de los buffer
 
-    int j1 = B-i1, j2 = B-i2;
-
-    while(!inputFile1.eof() || !inputFile2.eof()){
+    while(inputFile1.peek()!=EOF && inputFile2.peek()!=EOF){
         
-        
-        while(j1>=0 && j2>=0){ //VER CASO EN QUE TIENEN TAMAÑOS DISTINTOS
+        if (Buff1Size == 0 && inputFile1) {
+            inputFile1.read(reinterpret_cast<char*>(buffer1.data()), B * sizeof(int));
+            std::streamsize bytesRead1 = inputFile1.gcount(); // entrega la cantidad de bytes efectivamenete leidos en la última operación
+            Buff1Size = bytesRead1 / sizeof(int);
+            buffer1.resize(Buff1Size);
+        }
+        if (Buff2Size == 0 && inputFile2) {
+            inputFile2.read(reinterpret_cast<char*>(buffer2.data()), B * sizeof(int));
+            std::streamsize bytesRead2 = inputFile2.gcount();
+            Buff2Size = bytesRead2 / sizeof(int);
+            buffer2.resize(Buff2Size);
+        }
 
-
-            if (j1 == 0){
-                //leer el siguiente bloque
-                inputFile1.read(reinterpret_cast<char*>(buffer1.data()), B*sizeof(int)); //preocuparse del caso donde no calzan perfecto
-                i1 = 0;
-            }   
-            if (j2==0){
-                //leer el siguiente bloque
-                inputFile2.read(reinterpret_cast<char*>(buffer2.data()), B * sizeof(int));
-                i2 = 0;
-            } 
-
+        while(Buff1Size>0 && Buff2Size>0){ 
 
             int menor;
             if(buffer1.front()<buffer2.front()){
                 menor = buffer1.front(); // el primer elemento del buffer 1 es menor
                 buffer1.erase(buffer1.begin()); // se elimina del buffer
-                i1++;
+                Buff1Size--;
+
             }else{
                 menor = buffer2.front();
                 buffer2.erase(buffer2.begin());
-                i2++;
+                Buff2Size--;
             }
             outputBuffer.push_back(menor);
+            outBuffSize++;
 
-            out_i++;
-            std::cout << "El buffer de salida tiene " << out_i << " elementos\n";        
+            if (outBuffSize == B) {
 
-            if (out_i>=B){ // si el buffer de salida excede su tamaño máximo
-                std::cout << "buffer 1 tiene " << i1 << " elementos\n";
-                std::cout << "buffer 2 tiene " << i2 << " elementos\n";
-                std::cout << "Se está escribiendo en el bin de salida\n";
-                //escribir en el archivo de output
-                for (size_t i = 0; i < outputBuffer.size(); ++i) {
-                    outputFile.write(reinterpret_cast<const char*>(&outputBuffer[i]), sizeof(int));
-                    out_i--;
-                }
-
-                //vaciar buffer
+                for (int val : outputBuffer)
+                    outputFile.write(reinterpret_cast<const char*>(&val), sizeof(int));
+                
                 outputBuffer.clear();
-            }
-        }
-
-        while (j1>0){
-            
-            if (j1 ==0 ){
-                //leer el siguiente bloque
-                inputFile1.read(reinterpret_cast<char*>(buffer1.data()), B*sizeof(int)); //preocuparse del caso donde no calzan perfecto
-                i1 = 0;
+                outBuffSize = 0;
             } 
-
-            int k = buffer1.front(); // el primer elemento del buffer 1 es menor
-            buffer1.erase(buffer1.begin()); // se elimina del buffer
-            i1++;
-            outputBuffer.push_back(k);
         }
-
-        while (j2>=0){
-            std::cout << "Entro\n";
-            if (j2==0){
-                //leer el siguiente bloque
-                inputFile2.read(reinterpret_cast<char*>(buffer2.data()), B * sizeof(int));
-                i2 = 0;
-            }
-            int k = buffer2.front(); // el primer elemento del buffer 1 es menor
-            buffer2.erase(buffer2.begin()); // se elimina del buffer
-            i2++;
-            outputBuffer.push_back(k);
-        }
-            
-        
     }
+
+    
+
+    while (Buff1Size>0 || inputFile1.peek()!=EOF){
+        if (Buff1Size==0){
+            inputFile1.read(reinterpret_cast<char*>(buffer1.data()), B * sizeof(int));
+            Buff1Size = inputFile1.gcount() / sizeof(int);
+            buffer1.resize(Buff1Size); // Resize to actual data read
+
+            if (Buff1Size == 0) break; // No more data
+        }
+        int k = buffer1.front(); // el primer elemento del buffer 1 es menor
+        buffer1.erase(buffer1.begin()); // se elimina del buffer
+        Buff1Size--;
+
+        outputBuffer.push_back(k);
+        outBuffSize++;
+
+        if (outBuffSize == B) {
+            for (int val : outputBuffer)
+                outputFile.write(reinterpret_cast<const char*>(&val), sizeof(int));
+            
+            outputBuffer.clear();
+            outBuffSize = 0;
+        }  
+    }
+
+    while (Buff2Size>0 || inputFile2.peek()!=EOF){
+        int k = buffer2.front(); // el primer elemento del buffer 1 es menor
+        buffer2.erase(buffer2.begin()); // se elimina del buffer
+        Buff2Size--;
+
+        outputBuffer.push_back(k);
+        outBuffSize++;
+
+        if (outBuffSize == B) {
+            for (int val : outputBuffer)
+                outputFile.write(reinterpret_cast<const char*>(&val), sizeof(int));
+            
+            outputBuffer.clear();
+            outBuffSize = 0;
+        }  
+
+
+        if (Buff2Size==0 && !inputFile2){
+            inputFile2.read(reinterpret_cast<char*>(buffer2.data()), B * sizeof(int));
+            Buff2Size = inputFile2.gcount() / sizeof(int);
+            buffer2.resize(Buff2Size); // Resize to actual data read
+
+            if (Buff2Size == 0) break; // No more data
+        }
+    }
+
+    
 
     outputFile.close();
     inputFile1.close();
-    inputFile2.close();
+    //inputFile2.close();
 
     std::cout << "El archivo " << outputFileName << " fue creado\n";
 
@@ -149,7 +162,9 @@ std::string extMergeSort(const std::string &filename1, int M){
 
 int main(){
 
-    mergeFiles("sorted1.bin", "sorted2.bin"); // para probar
+    mergeFiles("sorted1.bin", "sorted2.bin", "merged12.bin"); // para probar
+    mergeFiles("sorted1.bin", "sorted1.bin", "merged11.bin");
+    mergeFiles("sorted2.bin", "sorted2.bin", "merged22.bin");
 
     return 1;
 
