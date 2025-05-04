@@ -203,7 +203,7 @@ std::string mergeFiles(std::vector<std::string> partitions, const std::string &o
 }
 
 
-std::vector<std::string> partitionFile(const std::string& archivoOriginal, size_t bloqueSize) {
+std::vector<std::string> partitionFile(const std::string& archivoOriginal) {
     std::ifstream entrada(archivoOriginal, std::ios::binary);
     std::vector<std::string> particiones;
 
@@ -212,15 +212,16 @@ std::vector<std::string> partitionFile(const std::string& archivoOriginal, size_
         exit(1);
     }
 
-    std::vector<int> buffer(bloqueSize);
+    std::vector<int> buffer(B);
     int parte = 0;
 
     while (entrada) {
-        entrada.read(reinterpret_cast<char*>(buffer.data()), bloqueSize * sizeof(int));
+        entrada.read(reinterpret_cast<char*>(buffer.data()), B * sizeof(int));
         size_t leidos = entrada.gcount() / sizeof(int);
         if (leidos == 0) break;  // Nada más que leer
 
-        std::string nombreParte = "parte_" + std::to_string(parte++) + ".bin";
+        std::string fileName = std::filesystem::path(archivoOriginal).stem().string(); // obtiene solo el nombre del archivo
+        std::string nombreParte = "../bin/" + fileName + "_parte_" + std::to_string(parte++) + ".bin";
         std::ofstream salida(nombreParte, std::ios::binary);
         if (!salida) {
             std::cerr << "No se pudo crear " << nombreParte << "\n";
@@ -248,11 +249,13 @@ std::string extMergeSort(const std::string &filename, int M, int a){
 
     if(fileSize<ram){
         std::vector<int> buffer(numInts); //inicializo un vector del tamaño del archivo
+        
         std::fstream inputFile(filename, std::ios::in | std::ios::out | std::ios::binary); //abro el archivo
         inputFile.read(reinterpret_cast<char*>(buffer.data()), numInts * sizeof(int)); //lo leo en el buffer
+        
         std::sort (buffer.begin(), buffer.end()); // se ordena
         
-        //escribir en el archivo (o crear uno nuevo)
+        //escribir en el archivo
         inputFile.seekp(0); // vuelve al principio del archivo para sobreescribirlo
         inputFile.write(reinterpret_cast<char*>(buffer.data()), numInts * sizeof(int));
 
@@ -263,14 +266,18 @@ std::string extMergeSort(const std::string &filename, int M, int a){
     // determinar aridad --> voy a asumir que me entregan la aridad
 
     // particionar archivo según la aridad
-    std::vector particiones = partitionFile(filename, a);
+    std::vector<std::string> particiones = partitionFile(filename);
 
     for (auto particion : particiones){
         extMergeSort(particion, M, a);
     }
 
     // invocar mergeFiles()
-    std::string orderedFile = mergeFiles(particiones, "output.bin");
+    std::string ordFileName = std::filesystem::path(filename).stem().string(); // obtiene solo el nombre del archivo
+    std::string orderedFileName = "../bin/" + ordFileName + "_sorted.bin"; // crea el nombre del nuevo archivo ordenado, se guarda en el directorio bin
+    std::string orderedFile = mergeFiles(particiones, orderedFileName);
+
+    std::cout << "Se creó el archivo ordenado " << orderedFileName << "\n";
 
     return orderedFile; //retornar nombre del archivo ordenado
 }
@@ -283,7 +290,7 @@ int main(){
 
     //mergeFiles({"../bin/sorted1T1.bin", "../bin/sorted2T1.bin", "../bin/sorted3.bin"}, "../bin/mergedT1.bin");
 
-    extMergeSort("../bin/unsorted2.bin", 1, 5);
+    extMergeSort("../bin/unsorted4.bin", 1, 5);
 
     return 1;
 

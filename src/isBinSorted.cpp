@@ -14,7 +14,7 @@ bool isBinaryFileSorted(const std::string& filename) {
     std::ifstream infile(filename, std::ios::binary);
     if (!infile) {
         std::cerr << "Error: could not open file '" << filename << "' for reading.\n";
-        return false;
+        exit(1);
     }
 
     int prev, current;
