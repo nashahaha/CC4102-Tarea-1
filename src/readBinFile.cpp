@@ -25,6 +25,7 @@ void readBinFile(const std::string &filename){
 
     // Determine number of ints
     size_t numInts = fileSize / sizeof(int);
+    std::cout << "Este archivo tiene " << numInts << " enteros\n";
     
     std::vector<int> buffer(numInts);
 
