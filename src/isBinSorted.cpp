@@ -5,9 +5,9 @@
 /*
 Dice si  un archivo binario de enteros está ordenado.
 
-Para usar compilar con: g++ isBinSorted.cpp -o isSorted
+Para usar compilar con: g++ isBinSorted.cpp -o ex/isSorted
 
-Para leer un archivo: ./isSorted <nombreArchivo>.bin
+Para leer un archivo: ./isSorted <nombreArchivo.bin>
 */
 
 bool isBinaryFileSorted(const std::string& filename) {
