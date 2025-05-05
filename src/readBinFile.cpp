@@ -5,7 +5,7 @@
 /*
     Imprime el contenido de un archivo binario de enteros en la consola.
 
-    Para usar compilar con: g++ readBinFile.cpp -o readBinFile
+    Para usar compilar con: g++ readBinFile.cpp -o ex/readBinFile
 
     Para leer un archivo: ./readBinFile <nombreArchivo.bin>
 */

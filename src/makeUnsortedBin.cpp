@@ -6,7 +6,7 @@
 /*
     Crea un archivo binario de enteros desordenados en la carpeta bin.
 
-    Para usar compilar con: g++ makeUnsortedBin.cpp -o makeUnsorted
+    Para usar compilar con: g++ makeUnsortedBin.cpp -o ex/makeUnsorted
 
     Para crear un archivo: ./makeUnsorted <nombreArchivo> <tamaño en KB>
 
