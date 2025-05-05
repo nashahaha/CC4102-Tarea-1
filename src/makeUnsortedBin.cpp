@@ -4,13 +4,13 @@
 #include <string>
 
 /*
-Crea un archivo binario de enteros desordenados en la carpeta bin.
+    Crea un archivo binario de enteros desordenados en la carpeta bin.
 
-Para usar compilar con: g++ makeUnsortedBin.cpp -o makeUnsorted
+    Para usar compilar con: g++ makeUnsortedBin.cpp -o makeUnsorted
 
-Para crear un archivo: ./makeUnsorted <nombreArchivo> <tamaño en KB>
+    Para crear un archivo: ./makeUnsorted <nombreArchivo> <tamaño en KB>
 
-El nombre del archivo no debe incluir .bin solo el nombre.
+    IMPORTANTE: El nombre del archivo no debe incluir .bin ni la ruta, solo el nombre.
 */
 
 void makeUnsortedBinFile(const std::string& filename, size_t sizeKB) {
@@ -33,7 +33,6 @@ void makeUnsortedBinFile(const std::string& filename, size_t sizeKB) {
     }
 
     outfile.close();
-    std::cout << "File '" << filename << "' created with " << sizeKB << " KB of random integers.\n";
 }
 
 int main(int argc, char* argv[]) {
@@ -51,7 +50,7 @@ int main(int argc, char* argv[]) {
 
     makeUnsortedBinFile(filePath, sizeKB);
 
-    std::cout << " Se creó un archivo desordenado de " << sizeKB << "KB con "<< numInts <<" enteros en el directorio " << filePath <<"\n";
+    std::cout << "Se creó un archivo desordenado de " << sizeKB << "KB con "<< numInts <<" enteros en la ruta " << filePath <<"\n";
     
     return 0;
 }

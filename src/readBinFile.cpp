@@ -3,11 +3,11 @@
 #include <fstream>
 
 /*
-Imprime el contenido de un archivo binario de enteros en la consola.
+    Imprime el contenido de un archivo binario de enteros en la consola.
 
-Para usar compilar con: g++ readBinFile.cpp -o readBinFile
+    Para usar compilar con: g++ readBinFile.cpp -o readBinFile
 
-Para leer un archivo: ./readBinFile <nombreArchivo>.bin
+    Para leer un archivo: ./readBinFile <nombreArchivo.bin>
 */
 
 void readBinFile(const std::string &filename){
@@ -45,7 +45,7 @@ void readBinFile(const std::string &filename){
 int main(int argc, char* argv[]) {
 
     if (argc < 2) {
-        std::cerr << "Usage: " << argv[0] << " <binary_file>\n";
+        std::cerr << "Usage: " << argv[0] << " <binary_file.bin>\n";
         return 1;
     }
     
