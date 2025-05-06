@@ -3,7 +3,7 @@
 #include <fstream>
 #include <filesystem>
 #include <algorithm>
-
+#include <string>
 std::vector<std::string> partitionFile(const std::string& filename, int a, int M) {
     std::ifstream entrada(filename, std::ios::binary | std::ios::ate);
     std::vector<std::string> particiones;
