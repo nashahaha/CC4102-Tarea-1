@@ -1,0 +1,6 @@
+services:
+  cc4102tarea1:
+    image: cc4102tarea1
+    build:
+      context: .
+      dockerfile: ./Dockerfile

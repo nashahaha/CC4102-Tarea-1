@@ -4,9 +4,10 @@
 #include <filesystem>
 #include <algorithm>
 #include <random>
+#include <string>
 
 size_t B = 1024; // Se asume que el bloque es de tamaño 4KB, por ahora
-int INT_MAX = 99999999;
+#define INT_MAX 99999999
 
 /**
  * @brief Representa una partición de un archivo binario de enteros.
