@@ -12,7 +12,7 @@ int INT_MAX = 99999999;
  * @brief Representa una partición de un archivo binario de enteros.
  *
  * Esta estructura almacena la información necesaria para manejar una partición 
- * individual de un archivo durante el proceso de ordenamiento externo o merge.
+ * individual de un archivo durante el proceso de merge.
  *
  * Campos:
  * - id: Identificador único de la partición (útil para depuración).
@@ -22,7 +22,7 @@ int INT_MAX = 99999999;
  * - bufferSize: Cantidad de elementos actualmente almacenados en el buffer.
  */
 struct Part {
-    int id; //util para debuggear
+    int id;
     std::string filename;
     std::ifstream* fileStr;
     std::vector<int> buffer;
@@ -100,11 +100,11 @@ std::string mergeFiles(std::vector<std::string> partitions, const std::string &o
         }
 
         // ----------------------------------------------------------------------------------------
-        // Si ya se terminó de ller el archivo se quita de las comparaciones
+        // Si se terminó de leer el archivo se quita de las comparaciones
         // ----------------------------------------------------------------------------------------
         for (auto it = partsToRead.begin(); it != partsToRead.end(); ) {
             if (it->bufferSize == 0 && it->fileStr->peek()==EOF) 
-                it = partsToRead.erase(it);  // si despues de llenar los buffer sigue vacío lo eliminamos
+                it = partsToRead.erase(it);
             else
                 it++;
             
@@ -152,7 +152,7 @@ std::string mergeFiles(std::vector<std::string> partitions, const std::string &o
     }
 
     // ----------------------------------------------------------------------------------------
-    // En este punto todos los archivos ya se leyeron por completo excepto uno
+    // En este punto todos los archivos se leyeron por completo excepto uno
     // Queda agregar todos los elementos del archivo restante al archivo de salida pero 
     // ya no se necesitan comparaciones
     // ----------------------------------------------------------------------------------------
@@ -328,8 +328,7 @@ std::string extMergeSort(const std::string &filename, int M, int a){
         // Se sobrescribe el arreglo ordenado en el mismo archivo
         inputFile.seekp(0); // Vuelve al principio
         inputFile.write(reinterpret_cast<char*>(buffer.data()), numInts * sizeof(int));
-
-        std::cout << "Se ordenó " << filename << "\n";
+        inputFile.close();
         return filename;
     }
 
@@ -343,17 +342,14 @@ std::string extMergeSort(const std::string &filename, int M, int a){
     }
 
     std::string baseName = std::filesystem::path(filename).stem().string(); // Obtiene solo el nombre del archivo
-    std::string orderedFileName = "../bin/" + baseName + "_sorted.bin"; // crea el nombre del nuevo archivo ordenado, se guarda en el directorio bin
+    std::string orderedFileName = "../bin/" + baseName + "_sorted.bin"; // Crea el nombre del nuevo archivo ordenado, se guarda en el directorio bin
     
     
     std::string orderedFile = mergeFiles(sortedPart, orderedFileName);
 
-    for(auto& part: particiones){ 
-        std::remove(part.c_str());
-    }
-    for(auto& part: sortedPart){ 
-        std::remove(part.c_str());
-    }
+    for(auto& part: particiones) std::remove(part.c_str());
+    for(auto& part: sortedPart) std::remove(part.c_str());
+    
     std::cout << "------------------------Se creó el archivo ordenado " << orderedFileName << ":) ------------------------\n";
 
     return orderedFile;
@@ -361,7 +357,7 @@ std::string extMergeSort(const std::string &filename, int M, int a){
 
 int main(){
 
-    extMergeSort("../bin/unsorted8.bin", 1, 5);
+    extMergeSort("../bin/unsorted8.bin", 1, 4);
 
     return 1;
 
