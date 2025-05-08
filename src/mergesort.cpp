@@ -91,6 +91,7 @@ std::string mergeFiles(std::vector<std::string> partitions, const std::string &o
             Part &p = partsToRead[i];
 
             if (p.bufferSize == 0 && p.fileStr->peek()!=EOF) {
+                p.buffer.clear();
                 p.buffer.resize(B);
                 p.fileStr->read(reinterpret_cast<char*>(p.buffer.data()), B * sizeof(int));
                 std::streamsize bytesRead1 = p.fileStr->gcount(); // entrega la cantidad de bytes efectivamenete leidos en la última operación
@@ -126,7 +127,6 @@ std::string mergeFiles(std::vector<std::string> partitions, const std::string &o
                 }
             }
 
-            partsToRead[min_index].buffer.erase(partsToRead[min_index].buffer.begin());
             partsToRead[min_index].bufferSize--;
             
             outputBuffer.push_back(min_value);
@@ -161,6 +161,7 @@ std::string mergeFiles(std::vector<std::string> partitions, const std::string &o
 
     while (true){
         if (p.bufferSize==0){
+            p.buffer.clear();
             p.buffer.resize(B);
             p.fileStr->read(reinterpret_cast<char*>(p.buffer.data()), B * sizeof(int));
             p.bufferSize = p.fileStr->gcount() / sizeof(int);
@@ -171,7 +172,6 @@ std::string mergeFiles(std::vector<std::string> partitions, const std::string &o
         }
 
         int k = p.buffer.front(); 
-        p.buffer.erase(p.buffer.begin());
         p.bufferSize--;
 
         outputBuffer.push_back(k);
@@ -329,7 +329,7 @@ std::string extMergeSort(const std::string &filename, int M, int a){
         inputFile.seekp(0); // Vuelve al principio
         inputFile.write(reinterpret_cast<char*>(buffer.data()), numInts * sizeof(int));
 
-        std::cout << "Se ordenó " << filename << "\n";
+        //std::cout << "Se ordenó " << filename << "\n";
         return filename;
     }
 
@@ -354,7 +354,7 @@ std::string extMergeSort(const std::string &filename, int M, int a){
     for(auto& part: sortedPart){ 
         std::remove(part.c_str());
     }
-    std::cout << "------------------------Se creó el archivo ordenado " << orderedFileName << ":) ------------------------\n";
+    std::cout << "------------------------Se creó el archivo ordenado " << orderedFileName << " :) ------------------------\n";
 
     return orderedFile;
 }
