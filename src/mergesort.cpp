@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <string>
 
-size_t B = 1024; // Se asume que el bloque es de tamaño 4KB
+size_t B_m = 1024; // Se asume que el bloque es de tamaño 4KB
 #define INT_MAX 99999999
 
 /**
@@ -70,7 +70,7 @@ std::string mergeFiles(std::vector<std::string> partitions, const std::string &o
             std::exit(1);
         }
 
-        std::vector<int> buff(B); 
+        std::vector<int> buff(B_m); 
         p.buffer = buff;
         p.bufferSize = 0;
         parts.push_back(p);
@@ -92,8 +92,8 @@ std::string mergeFiles(std::vector<std::string> partitions, const std::string &o
 
             if (p.bufferSize == 0 && p.fileStr->peek()!=EOF) {
                 p.buffer.clear();
-                p.buffer.resize(B);
-                p.fileStr->read(reinterpret_cast<char*>(p.buffer.data()), B * sizeof(int));
+                p.buffer.resize(B_m);
+                p.fileStr->read(reinterpret_cast<char*>(p.buffer.data()), B_m * sizeof(int));
                 std::streamsize bytesRead1 = p.fileStr->gcount(); // entrega la cantidad de bytes efectivamenete leidos en la última operación
                 p.bufferSize = bytesRead1 / sizeof(int);
                 p.buffer.resize(p.bufferSize);
@@ -133,7 +133,7 @@ std::string mergeFiles(std::vector<std::string> partitions, const std::string &o
             outBuffSize++;
 
             // Si el buffer del archivo de salida se llena, se escribe en el archivo
-            if (outBuffSize == B) {
+            if (outBuffSize == B_m) {
                 outputFile.write(reinterpret_cast<char*>(outputBuffer.data()), outputBuffer.size() * sizeof(int));
                 outputBuffer.clear();
                 outBuffSize = 0;   
@@ -162,8 +162,8 @@ std::string mergeFiles(std::vector<std::string> partitions, const std::string &o
     while (true){
         if (p.bufferSize==0){
             p.buffer.clear();
-            p.buffer.resize(B);
-            p.fileStr->read(reinterpret_cast<char*>(p.buffer.data()), B * sizeof(int));
+            p.buffer.resize(B_m);
+            p.fileStr->read(reinterpret_cast<char*>(p.buffer.data()), B_m * sizeof(int));
             p.bufferSize = p.fileStr->gcount() / sizeof(int);
             p.buffer.resize(p.bufferSize);
 
@@ -178,8 +178,8 @@ std::string mergeFiles(std::vector<std::string> partitions, const std::string &o
         outBuffSize++;
 
 
-        if (outBuffSize == B) {
-            outputFile.write(reinterpret_cast<char*>(outputBuffer.data()), B * sizeof(int));
+        if (outBuffSize == B_m) {
+            outputFile.write(reinterpret_cast<char*>(outputBuffer.data()), B_m * sizeof(int));
             outputBuffer.clear();
             outBuffSize = 0;
         } 
@@ -187,7 +187,7 @@ std::string mergeFiles(std::vector<std::string> partitions, const std::string &o
     }
 
     // ----------------------------------------------------------------------------------------
-    // Agrega el ultimo bloque que queda (que no es necesariamente de tamaño B)
+    // Agrega el ultimo bloque que queda (que no es necesariamente de tamaño B_m)
     // ----------------------------------------------------------------------------------------
     if (!outputBuffer.empty()) { 
         outputFile.write(reinterpret_cast<char*>(outputBuffer.data()), outputBuffer.size() * sizeof(int));
@@ -343,7 +343,7 @@ std::string extMergeSort(const std::string &filename, int M, int a){
     }
 
     std::string baseName = std::filesystem::path(filename).stem().string(); // Obtiene solo el nombre del archivo
-    std::string orderedFileName = "../bin/" + baseName + "_sorted.bin"; // crea el nombre del nuevo archivo ordenado, se guarda en el directorio bin
+    std::string orderedFileName = "../bin/" + baseName + "_m_sorted.bin"; // crea el nombre del nuevo archivo ordenado, se guarda en el directorio bin
     
     
     std::string orderedFile = mergeFiles(sortedPart, orderedFileName);
@@ -358,8 +358,4 @@ std::string extMergeSort(const std::string &filename, int M, int a){
 
     return orderedFile;
 }
-
-
-
-
 

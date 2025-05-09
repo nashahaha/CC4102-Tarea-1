@@ -52,4 +52,7 @@ void runExperiment(const std::string& filename, size_t size, int min, int max, i
     std::cout << "Tiempo de QuickSort: " << quickDuration.count() << " segundos.\n";
 }
 
-
+int main(){
+    runExperiment("../bin/unsorted9.bin", 200000000, -1000000, 1000000, 50, 5);
+    return 1;
+}
