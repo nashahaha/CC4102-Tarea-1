@@ -35,22 +35,4 @@ void makeUnsortedBinFile(const std::string& filename, size_t sizeKB) {
     outfile.close();
 }
 
-int main(int argc, char* argv[]) {
 
-    if (argc < 3) {
-        std::cerr << "Usage: " << argv[0] << " <binary_file> <fileSizeKB>\n";
-        return 1;
-    }
-
-    std::string filename = argv[1];
-    std::string filePath = "../bin/" + filename + ".bin";
-    size_t sizeKB = std::stoul(argv[2]);
-
-    size_t numInts = (sizeKB * 1024) / sizeof(int);
-
-    makeUnsortedBinFile(filePath, sizeKB);
-
-    std::cout << "Se creó un archivo desordenado de " << sizeKB << "KB con "<< numInts <<" enteros en la ruta " << filePath <<"\n";
-    
-    return 0;
-}

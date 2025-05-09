@@ -33,20 +33,4 @@ bool isBinaryFileSorted(const std::string& filename) {
     return true;
 }
 
-int main(int argc, char* argv[]){
 
-    if (argc < 2) {
-        std::cerr << "Usage: " << argv[0] << " <binary_file>\n";
-        return 1;
-    }
-    std::string filename = argv[1];
-
-    bool is_sorted = isBinaryFileSorted(filename);
-    
-    if(is_sorted == false)
-        std::cout << filename << " está desordenado\n";
-    else
-        std::cout << filename << " está ordenado :)\n";
-
-    return is_sorted;
-}

@@ -52,17 +52,4 @@ void runExperiment(const std::string& filename, size_t size, int min, int max, i
     std::cout << "Tiempo de QuickSort: " << quickDuration.count() << " segundos.\n";
 }
 
-int main() {
-    // Parámetros del experimento
-    std::string filename = "../bin/unsorted.bin";
-    size_t size = 1000000; // Número de enteros
-    int min = -1000000;    // Valor mínimo
-    int max = 1000000;     // Valor máximo
-    int memoryMB = 1;      // Memoria disponible en MB
-    int partitions = 5;    // Número de particiones
 
-    // Ejecutar experimento
-    runExperiment(filename, size, min, max, memoryMB, partitions);
-
-    return 0;
-}
