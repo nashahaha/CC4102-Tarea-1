@@ -31,18 +31,4 @@ void createArray(const std::string& filename, size_t size, int min, int max) {
     std::cout << "Archivo creado: " << filename << " con " << size << " enteros.\n";
 }
 
-int main(int argc, char* argv[]) {
-    if (argc < 5) {
-        std::cerr << "Uso: " << argv[0] << " <nombreArchivo> <tamaño> <min> <max>\n";
-        return 1;
-    }
 
-    std::string filename = argv[1];
-    size_t size = std::stoul(argv[2]);
-    int min = std::stoi(argv[3]);
-    int max = std::stoi(argv[4]);
-
-    createArray(filename, size, min, max);
-
-    return 0;
-}

@@ -359,13 +359,7 @@ std::string extMergeSort(const std::string &filename, int M, int a){
     return orderedFile;
 }
 
-int main(){
 
-    extMergeSort("../bin/unsorted8.bin", 1, 5);
-
-    return 1;
-
-}
 
 
 

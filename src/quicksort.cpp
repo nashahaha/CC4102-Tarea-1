@@ -9,26 +9,6 @@
 size_t B = 1024; // Se asume que el bloque es de tamaño 4KB, por ahora
 #define INT_MAX 99999999
 
-/**
- * @brief Representa una partición de un archivo binario de enteros.
- *
- * Esta estructura almacena la información necesaria para manejar una partición 
- * individual de un archivo durante el proceso de ordenamiento externo mediante Quicksort.
- *
- * Campos:
- * - id: Identificador único de la partición (útil para depuración).
- * - filename: Nombre del archivo asociado a esta partición.
- * - fileStr: Puntero al flujo de entrada del archivo.
- * - buffer: Vector de enteros usado como buffer de lectura.
- * - bufferSize: Cantidad de elementos actualmente almacenados en el buffer.
- */
-struct Part {
-    int id;
-    std::string filename;
-    std::ifstream* fileStr;
-    std::vector<int> buffer;
-    int bufferSize;
-};
 
 /**
  * @brief Selecciona pivotes aleatorios para el particionamiento del Quicksort externo.
@@ -248,15 +228,5 @@ std::string extQuickSort(const std::string &filename, int M, int a) {
     return concatenateFiles(sortedPartitions, sortedFile);
 }
 
-/**
- * @brief Main
- *
- */
-int main() {
-
-    extQuickSort("../bin/unsorted4.bin", 1, 5);
-    
-    return 1;
-}
 
 
