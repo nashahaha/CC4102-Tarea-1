@@ -17,13 +17,13 @@ bool isBinaryFileSorted(const std::string& filename) {
         exit(1);
     }
 
-    int prev, current;
-    if (!infile.read(reinterpret_cast<char*>(&prev), sizeof(int))) {
+    int64_t prev, current;
+    if (!infile.read(reinterpret_cast<char*>(&prev), sizeof(int64_t))) {
         // File is empty or unreadable → consider it sorted
         return true;
     }
 
-    while (infile.read(reinterpret_cast<char*>(&current), sizeof(int))) {
+    while (infile.read(reinterpret_cast<char*>(&current), sizeof(int64_t))) {
         if (current < prev) {
             return false;  // Not sorted
         }

@@ -6,7 +6,7 @@
 #include <random>
 #include <string>
 
-size_t B = 1024; // Se asume que el bloque es de tamaño 4KB, por ahora
+size_t B_ = 1024; // Se asume que el bloque es de tamaño 4KB, por ahora
 #define INT_MAX 99999999
 
 
@@ -23,7 +23,7 @@ size_t B = 1024; // Se asume que el bloque es de tamaño 4KB, por ahora
  * 
  * @throws Termina la ejecución si no se puede abrir el archivo de entrada.
  */
-std::vector<int> selectPivots(const std::string &filename, int a) {
+std::vector<int64_t> selectPivots(const std::string &filename, int a) {
     std::ifstream inputFile(filename, std::ios::binary);
     if (!inputFile) {
         std::cerr << "No se pudo abrir el archivo de entrada para seleccionar pivotes\n";
@@ -33,23 +33,23 @@ std::vector<int> selectPivots(const std::string &filename, int a) {
     inputFile.seekg(0, std::ios::end);
     size_t fileSize = inputFile.tellg();
     inputFile.seekg(0, std::ios::beg);
-    size_t numInts = fileSize / sizeof(int);
+    size_t numInts = fileSize / sizeof(int64_t);
 
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_int_distribution<size_t> dist(0, numInts - 1);
 
     size_t randomPos = dist(gen);
-    size_t blockPos = (randomPos / B) * B * sizeof(int);
+    size_t blockPos = (randomPos / B_) * B_ * sizeof(int64_t);
 
     inputFile.seekg(blockPos, std::ios::beg);
-    std::vector<int> buffer(B);
-    inputFile.read(reinterpret_cast<char*>(buffer.data()), B * sizeof(int));
-    size_t readCount = inputFile.gcount() / sizeof(int);
+    std::vector<int64_t> buffer(B_);
+    inputFile.read(reinterpret_cast<char*>(buffer.data()), B_ * sizeof(int64_t));
+    size_t readCount = inputFile.gcount() / sizeof(int64_t);
     buffer.resize(readCount);
 
     std::sort(buffer.begin(), buffer.end());
-    std::vector<int> pivots;
+    std::vector<int64_t> pivots;
 
     size_t step = buffer.size() / a;
     for (int i = 1; i < a; ++i) {
@@ -61,7 +61,7 @@ std::vector<int> selectPivots(const std::string &filename, int a) {
     }
 
     std::cout << "Pivotes seleccionados: ";
-    for (int p : pivots) std::cout << p << " ";
+    for (int64_t p : pivots) std::cout << p << " ";
     std::cout << std::endl;
 
     inputFile.close();
@@ -81,7 +81,7 @@ std::vector<int> selectPivots(const std::string &filename, int a) {
  * 
  * @throws Termina la ejecución si no se puede abrir el archivo de entrada o de salida.
  */
-std::vector<std::string> partitionFileQS(const std::string& archivoOriginal, const std::vector<int>& pivots) {
+std::vector<std::string> partitionFileQS(const std::string& archivoOriginal, const std::vector<int64_t>& pivots) {
     std::ifstream entrada(archivoOriginal, std::ios::binary);
     std::vector<std::string> particiones(pivots.size() + 1);
 
@@ -98,17 +98,17 @@ std::vector<std::string> partitionFileQS(const std::string& archivoOriginal, con
         exit(1);
     }
 
-    std::vector<int> buffer(B);
+    std::vector<int64_t> buffer(B_);
     while (entrada) {
-        entrada.read(reinterpret_cast<char*>(buffer.data()), B * sizeof(int));
-        size_t leidos = entrada.gcount() / sizeof(int);
+        entrada.read(reinterpret_cast<char*>(buffer.data()), B_ * sizeof(int64_t));
+        size_t leidos = entrada.gcount() / sizeof(int64_t);
         if (leidos == 0) break;
 
         for (size_t i = 0; i < leidos; ++i) {
-            int val = buffer[i];
+            int64_t val = buffer[i];
             size_t partIdx = 0;
             while (partIdx < pivots.size() && val > pivots[partIdx]) partIdx++;
-            partFiles[partIdx].write(reinterpret_cast<char*>(&val), sizeof(int));
+            partFiles[partIdx].write(reinterpret_cast<char*>(&val), sizeof(int64_t));
         }
     }
 
@@ -140,7 +140,7 @@ std::string concatenateFiles(const std::vector<std::string> &partitions, const s
         exit(1);
     }
 
-    std::vector<char> buffer(B * sizeof(int));
+    std::vector<char> buffer(B_ * sizeof(int64_t));
 
     for (const auto &partition : partitions) {
         std::ifstream inputFile(partition, std::ios::binary);
@@ -184,19 +184,19 @@ std::string concatenateFiles(const std::vector<std::string> &partitions, const s
 std::string extQuickSort(const std::string &filename, int M, int a) {
     std::uintmax_t ram = M * 1000000;
     std::uintmax_t fileSize = std::filesystem::file_size(filename);
-    size_t numInts = fileSize / sizeof(int);
+    size_t numInts = fileSize / sizeof(int64_t);
 
-    std::cout << "\n Procesando archivo: " << filename 
-              << " (" << fileSize / (1024 * 1024) << " MB)\n";
+    //std::cout << "\n Procesando archivo: " << filename 
+    //          << " (" << fileSize / (1024 * 1024) << " MB)\n";
     // ----------------------------------------------------------------------------------------
     // Si el tamaño del archivo es menor al de la memoria RAM, se ordena todo en memoria principal
     // ----------------------------------------------------------------------------------------
     if (fileSize < ram) {
-        std::vector<int> buffer(numInts);
+        std::vector<int64_t> buffer(numInts);
         std::fstream inputFile(filename, std::ios::in | std::ios::out | std::ios::binary);
-        inputFile.read(reinterpret_cast<char*>(buffer.data()), numInts * sizeof(int));
+        inputFile.read(reinterpret_cast<char*>(buffer.data()), numInts * sizeof(int64_t));
 
-        auto quickSort = [](auto&& self, std::vector<int>& arr, int left, int right) -> void {
+        auto quickSort = [](auto&& self, std::vector<int64_t>& arr, int left, int right) -> void {
             if (left >= right) return;
             int pivot = arr[(left + right) / 2];
             int i = left, j = right;
@@ -211,12 +211,12 @@ std::string extQuickSort(const std::string &filename, int M, int a) {
 
         quickSort(quickSort, buffer, 0, numInts - 1);
         inputFile.seekp(0);
-        inputFile.write(reinterpret_cast<char*>(buffer.data()), numInts * sizeof(int));
+        inputFile.write(reinterpret_cast<char*>(buffer.data()), numInts * sizeof(int64_t));
         inputFile.close();
         return filename;
     }
 
-    std::vector<int> pivots = selectPivots(filename, a);
+    std::vector<int64_t> pivots = selectPivots(filename, a);
     std::vector<std::string> partitions = partitionFileQS(filename, pivots);
 
     std::vector<std::string> sortedPartitions;
