@@ -139,33 +139,3 @@ int ternarySearchOptimalArity(const std::string& filename, int low, int high, in
     
     return bestArity;
 }
-
-int main() {
-    const std::string testFilename = "../bin/test_60M.bin";
-    const size_t numIntegers = 60000000; // 60M enteros
-    const int memoryMB = 50;            // Memoria disponible en MB
-
-    // Generar archivo de prueba (solo si no existe)
-    if (!std::filesystem::exists(testFilename)) {
-        generateTestFile(testFilename, numIntegers);
-    } else {
-        std::cout << "El archivo de prueba ya existe, se usará el existente.\n";
-    }
-
-    // Calcular el número de enteros que caben en un bloque
-    size_t integersPerBlock = calculateIntegersPerBlock(BLOCK_SIZE);
-    int maxArity = integersPerBlock;
-    std::cout << "Enteros por bloque: " << integersPerBlock << "\n";
-    std::cout << "Rango de búsqueda para a: [2, " << maxArity << "]\n";
-
-    // Encontrar la aridad óptima usando búsqueda ternaria
-    std::cout << "\nIniciando búsqueda ternaria para encontrar la aridad óptima...\n";
-    int optimalA = ternarySearchOptimalArity(testFilename, 2, maxArity, memoryMB);
-    
-    // Evaluar la aridad óptima para confirmar
-    size_t finalAccesses = evaluateArity(testFilename, optimalA, memoryMB);
-    std::cout << "\nLa aridad óptima encontrada es: " << optimalA 
-              << " con " << finalAccesses << " accesos a disco\n";
-
-    return 0;
-}
