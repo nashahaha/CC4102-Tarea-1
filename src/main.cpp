@@ -58,6 +58,26 @@ void runExperiment(const std::string& filename, size_t size, int64_t min, int64_
     std::cout <<   "|   Lecturas QuickSort: " << disk_reads << "\n";
     std::cout <<   "|   Escrituras QuickSort: " << disk_writes << "\n";
     std::cout <<   "-----------------------------------------------------------------------------\n";
+
+    // Guardar resumen en archivo de texto (modo append)
+    std::ofstream summary("resumen_experimentos.txt", std::ios::app);
+    if (summary) {
+        summary << "----- Resultado del experimento -----\n";
+        summary << "Archivo original: " << filename << "\n";
+        summary << "Tamaño: " << sizeMB << " MB (" << size << " enteros)\n";
+        summary << "MergeSort:\n";
+        summary << "  Tiempo: " << mergeDuration.count() << " s\n";
+        summary << "  Lecturas: " << disk_reads_merge << "\n";
+        summary << "  Escrituras: " << disk_writes_merge << "\n";
+        summary << "QuickSort:\n";
+        summary << "  Tiempo: " << quickDuration.count() << " s\n";
+        summary << "  Lecturas: " << disk_reads << "\n";
+        summary << "  Escrituras: " << disk_writes << "\n";
+        summary << "--------------------------------------\n\n";
+        summary.close();
+    } else {
+        std::cerr << "No se pudo escribir el resumen en 'resumen_experimentos.txt'\n";
+    }
 }
 
 
