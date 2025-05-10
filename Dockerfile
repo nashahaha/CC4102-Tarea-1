@@ -1,19 +1,24 @@
-# GCC support can be specified at major, minor, or micro version
-# (e.g. 8, 8.2 or 8.2.0).
-# See https://hub.docker.com/r/library/gcc/ for all supported GCC
-# tags from Docker Hub.
-# See https://docs.docker.com/samples/library/gcc/ for more on how to use this image
-FROM gcc:latest
+FROM ubuntu:22.04
 
-# These commands copy your files into the specified directory in the image
-# and set that as the working location
-COPY . /usr/src/myapp
-WORKDIR /usr/src/myapp
+ENV DEBIAN_FRONTEND=noninteractive
 
-# This command compiles your app using GCC, adjust for your source code
-RUN g++ -o myapp main.cpp
+# Instalar las herramientas necesarias
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    g++ \
+    make \
+    time \
+    valgrind \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# This command runs your application, comment out this line to compile only
+# Establecer el directorio de trabajo
+WORKDIR /workspace
+
+# Copiar todos los archivos del proyecto al contenedor
+COPY . .
+
+# Compilar todos los archivos .cpp en el directorio src
+RUN g++ -o myapp src/*.cpp
+
+# Comando para ejecutar el programal programa
 CMD ["./myapp"]
-
-LABEL Name=cc4102tarea1 Version=0.0.1
