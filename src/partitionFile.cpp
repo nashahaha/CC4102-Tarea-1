@@ -64,21 +64,3 @@ std::vector<std::string> partitionFile(const std::string& filename, int a, int M
 }
 
 
-int main(int argc, char* argv[]){
-
-    if (argc < 3) {
-        std::cerr << "Usage: " << argv[0] << " <binary_file.bin> <partitionNumber>\n";
-        return 1;
-    }
-
-    std::string filename = argv[1];
-    size_t n = std::stoul(argv[2]);
-
-    std::vector<std::string> part = partitionFile(filename, n, 1);
-    std::cout << "Se crearon las particiones:\n";
-    for (auto val : part) {
-        std::cout << val << "\n";
-    }
-    
-    return 0;
-}

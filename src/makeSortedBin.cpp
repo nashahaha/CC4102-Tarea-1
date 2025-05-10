@@ -22,10 +22,4 @@ void generateSortedBinaryFile(const std::string& filename, size_t sizeKB, int st
     std::cout << "Sorted file '" << filename << "' created with " << numIntegers << " integers (" << sizeKB << " KB).\n";
 }
 
-int main() {
-    //generateSortedBinaryFile("sorted1.bin", 4, 392, 12);             // 10 KB sorted file, start at 0, step 1
-    //generateSortedBinaryFile("sorted2.bin", 4, 123, 2);
-    //generateSortedBinaryFile("sorted2.bin", 5, 100, 2);      // 5 KB file, start at 100, step 2
-    generateSortedBinaryFile("sorted3.bin", 1, 3, 2); 
-    return 0;
-}
+

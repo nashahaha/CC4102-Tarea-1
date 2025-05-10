@@ -17,13 +17,13 @@ bool isBinaryFileSorted(const std::string& filename) {
         exit(1);
     }
 
-    int prev, current;
-    if (!infile.read(reinterpret_cast<char*>(&prev), sizeof(int))) {
+    int64_t prev, current;
+    if (!infile.read(reinterpret_cast<char*>(&prev), sizeof(int64_t))) {
         // File is empty or unreadable → consider it sorted
         return true;
     }
 
-    while (infile.read(reinterpret_cast<char*>(&current), sizeof(int))) {
+    while (infile.read(reinterpret_cast<char*>(&current), sizeof(int64_t))) {
         if (current < prev) {
             return false;  // Not sorted
         }
@@ -33,20 +33,4 @@ bool isBinaryFileSorted(const std::string& filename) {
     return true;
 }
 
-int main(int argc, char* argv[]){
 
-    if (argc < 2) {
-        std::cerr << "Usage: " << argv[0] << " <binary_file>\n";
-        return 1;
-    }
-    std::string filename = argv[1];
-
-    bool is_sorted = isBinaryFileSorted(filename);
-    
-    if(is_sorted == false)
-        std::cout << filename << " está desordenado\n";
-    else
-        std::cout << filename << " está ordenado :)\n";
-
-    return is_sorted;
-}

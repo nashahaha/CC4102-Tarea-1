@@ -11,7 +11,7 @@
  * @param min Valor mínimo de los enteros generados.
  * @param max Valor máximo de los enteros generados.
  */
-void createArray(const std::string& filename, size_t size, int min, int max) {
+void createArray(const std::string& filename, size_t size, int64_t min, int64_t max) {
     std::ofstream outfile(filename, std::ios::binary);
     if (!outfile) {
         std::cerr << "Error: no se pudo crear el archivo " << filename << "\n";
@@ -20,29 +20,15 @@ void createArray(const std::string& filename, size_t size, int min, int max) {
 
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::uniform_int_distribution<int> dist(min, max);
+    std::uniform_int_distribution<int64_t> dist(min, max);
 
     for (size_t i = 0; i < size; ++i) {
-        int value = dist(gen);
-        outfile.write(reinterpret_cast<const char*>(&value), sizeof(int));
+        int64_t value = dist(gen);
+        outfile.write(reinterpret_cast<const char*>(&value), sizeof(int64_t));
     }
 
     outfile.close();
     std::cout << "Archivo creado: " << filename << " con " << size << " enteros.\n";
 }
 
-int main(int argc, char* argv[]) {
-    if (argc < 5) {
-        std::cerr << "Uso: " << argv[0] << " <nombreArchivo> <tamaño> <min> <max>\n";
-        return 1;
-    }
 
-    std::string filename = argv[1];
-    size_t size = std::stoul(argv[2]);
-    int min = std::stoi(argv[3]);
-    int max = std::stoi(argv[4]);
-
-    createArray(filename, size, min, max);
-
-    return 0;
-}

@@ -5,7 +5,7 @@
 #include "quicksort.cpp"
 #include "isBinSorted.cpp"
 
-void runExperiment(const std::string& filename, size_t size, int min, int max, int memoryMB, int partitions) {
+void runExperiment(const std::string& filename, size_t size, int64_t min, int64_t max, int memoryMB, int partitions) {
     // Crear archivo binario con enteros aleatorios
     std::cout << "Creando archivo binario...\n";
     createArray(filename, size, min, max);
@@ -45,24 +45,31 @@ void runExperiment(const std::string& filename, size_t size, int min, int max, i
         return;
     }
 
+    std::uintmax_t fileSize = std::filesystem::file_size(filename);
+    std::uintmax_t sizeMB = fileSize / 1'000'000;
+
     // Mostrar resultados
-    std::cout << "\nResultados del experimento:\n";
-    std::cout << "Tamaño del archivo: " << size << " enteros.\n";
-    std::cout << "Tiempo de MergeSort: " << mergeDuration.count() << " segundos.\n";
-    std::cout << "Tiempo de QuickSort: " << quickDuration.count() << " segundos.\n";
+    std::cout << "\n-------------------------Resultados del experimento:-------------------------\n";
+    std::cout <<   "|   Tamaño del archivo: " << sizeMB << " MB con "<< size << " enteros.       \n";
+    std::cout <<   "|   Tiempo de MergeSort: " << mergeDuration.count() << " segundos.           \n";
+    std::cout <<   "|   Tiempo de QuickSort: " << quickDuration.count() << " segundos.           \n";
+    std::cout <<   "-----------------------------------------------------------------------------\n";
 }
 
-int main() {
-    // Parámetros del experimento
-    std::string filename = "../bin/unsorted.bin";
-    size_t size = 1000000; // Número de enteros
-    int min = -1000000;    // Valor mínimo
-    int max = 1000000;     // Valor máximo
-    int memoryMB = 1;      // Memoria disponible en MB
-    int partitions = 5;    // Número de particiones
 
-    // Ejecutar experimento
-    runExperiment(filename, size, min, max, memoryMB, partitions);
+int main(){
+    //primer experimento con 25.000.000 de enteros = 200 MB = 4M
+    //runExperiment("../bin/unsorted9.bin", 25000000, -6000000, 1000000, 50, 50);
 
-    return 0;
+    //segundo experimento con 50.000.000 de enteros = 400 MB = 8M
+    //runExperiment("../bin/unsorted10.bin", 50000000, -6000000, 1000000, 50, 50);
+
+
+    for(int i=1; i<=15; i++){
+        std::string file = "../bin/unsorted_test" +  std::to_string(i) + ".bin";
+        runExperiment(file, 25000000*i, -25000000, 25000000, 50, 50);
+    }
+
+
+    return 1;
 }
