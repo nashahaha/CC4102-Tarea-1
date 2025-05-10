@@ -52,8 +52,32 @@ void runExperiment(const std::string& filename, size_t size, int64_t min, int64_
     std::cout << "\n-------------------------Resultados del experimento:-------------------------\n";
     std::cout <<   "|   Tamaño del archivo: " << sizeMB << " MB con "<< size << " enteros.       \n";
     std::cout <<   "|   Tiempo de MergeSort: " << mergeDuration.count() << " segundos.           \n";
+    std::cout <<   "|   Lecturas MergeSort: " << disk_reads_merge << "\n";
+    std::cout <<   "|   Escrituras MergeSort: " << disk_writes_merge << "\n";
     std::cout <<   "|   Tiempo de QuickSort: " << quickDuration.count() << " segundos.           \n";
+    std::cout <<   "|   Lecturas QuickSort: " << disk_reads << "\n";
+    std::cout <<   "|   Escrituras QuickSort: " << disk_writes << "\n";
     std::cout <<   "-----------------------------------------------------------------------------\n";
+
+    // Guardar resumen en archivo de texto (modo append)
+    std::ofstream summary("resumen_experimentos.txt", std::ios::app);
+    if (summary) {
+        summary << "----- Resultado del experimento -----\n";
+        summary << "Archivo original: " << filename << "\n";
+        summary << "Tamaño: " << sizeMB << " MB (" << size << " enteros)\n";
+        summary << "MergeSort:\n";
+        summary << "  Tiempo: " << mergeDuration.count() << " s\n";
+        summary << "  Lecturas: " << disk_reads_merge << "\n";
+        summary << "  Escrituras: " << disk_writes_merge << "\n";
+        summary << "QuickSort:\n";
+        summary << "  Tiempo: " << quickDuration.count() << " s\n";
+        summary << "  Lecturas: " << disk_reads << "\n";
+        summary << "  Escrituras: " << disk_writes << "\n";
+        summary << "--------------------------------------\n\n";
+        summary.close();
+    } else {
+        std::cerr << "No se pudo escribir el resumen en 'resumen_experimentos.txt'\n";
+    }
 }
 
 
@@ -66,8 +90,10 @@ int main(){
 
 
     for(int i=1; i<=15; i++){
-        std::string file = "../bin/unsorted_test" +  std::to_string(i) + ".bin";
-        runExperiment(file, 25000000*i, -25000000, 25000000, 50, 50);
+        for (int j=0; j<5; j++){ // se ejecuta 5 veces por cada tamaño de archivo
+            std::string file = "../bin/unsorted_test" + std::to_string(i) + "_" + std::to_string(j) + ".bin";
+            runExperiment(file, 25000000*i, -25000000, 25000000, 50, 50);
+        }
     }
 
 

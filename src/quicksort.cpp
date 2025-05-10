@@ -6,23 +6,13 @@
 #include <random>
 #include <string>
 
-size_t B_ = 1024; // Se asume que el bloque es de tamaño 4KB, por ahora
+size_t B_ = 1024; // Tamaño del bloque (número de enteros)
 #define INT_MAX 99999999
 
+// Contadores de accesos a disco, tanto para lectura como escritura
+size_t disk_reads = 0;
+size_t disk_writes = 0;
 
-/**
- * @brief Selecciona pivotes aleatorios para el particionamiento del Quicksort externo.
- *
- * Esta función selecciona un bloque aleatorio del archivo de entrada, ordena los valores,
- * y elige pivotes equiespaciados a partir del bloque para dividir el archivo original.
- *
- * @param filename Nombre del archivo binario a analizar.
- * @param a Número de particiones que se desean generar.
- * 
- * @return Un vector con los pivotes seleccionados.
- * 
- * @throws Termina la ejecución si no se puede abrir el archivo de entrada.
- */
 std::vector<int64_t> selectPivots(const std::string &filename, int a) {
     std::ifstream inputFile(filename, std::ios::binary);
     if (!inputFile) {
@@ -45,6 +35,7 @@ std::vector<int64_t> selectPivots(const std::string &filename, int a) {
     inputFile.seekg(blockPos, std::ios::beg);
     std::vector<int64_t> buffer(B_);
     inputFile.read(reinterpret_cast<char*>(buffer.data()), B_ * sizeof(int64_t));
+    disk_reads++;
     size_t readCount = inputFile.gcount() / sizeof(int64_t);
     buffer.resize(readCount);
 
@@ -68,23 +59,9 @@ std::vector<int64_t> selectPivots(const std::string &filename, int a) {
     return pivots;
 }
 
-/**
- * @brief Particiona un archivo binario de enteros usando un conjunto de pivotes.
- *
- * Esta función lee bloques del archivo original y los distribuye en distintas 
- * particiones según el valor de cada entero comparado con los pivotes.
- *
- * @param archivoOriginal Nombre del archivo a particionar.
- * @param pivots Vector con los valores pivotes que delimitan cada partición.
- * 
- * @return Un vector con los nombres de los archivos de partición generados.
- * 
- * @throws Termina la ejecución si no se puede abrir el archivo de entrada o de salida.
- */
 std::vector<std::string> partitionFileQS(const std::string& archivoOriginal, const std::vector<int64_t>& pivots) {
     std::ifstream entrada(archivoOriginal, std::ios::binary);
     std::vector<std::string> particiones(pivots.size() + 1);
-
     std::vector<std::ofstream> partFiles(pivots.size() + 1);
     std::string baseName = std::filesystem::path(archivoOriginal).stem().string();
 
@@ -101,6 +78,7 @@ std::vector<std::string> partitionFileQS(const std::string& archivoOriginal, con
     std::vector<int64_t> buffer(B_);
     while (entrada) {
         entrada.read(reinterpret_cast<char*>(buffer.data()), B_ * sizeof(int64_t));
+        disk_reads++;
         size_t leidos = entrada.gcount() / sizeof(int64_t);
         if (leidos == 0) break;
 
@@ -109,6 +87,7 @@ std::vector<std::string> partitionFileQS(const std::string& archivoOriginal, con
             size_t partIdx = 0;
             while (partIdx < pivots.size() && val > pivots[partIdx]) partIdx++;
             partFiles[partIdx].write(reinterpret_cast<char*>(&val), sizeof(int64_t));
+            disk_writes++;
         }
     }
 
@@ -119,20 +98,6 @@ std::vector<std::string> partitionFileQS(const std::string& archivoOriginal, con
     return particiones;
 }
 
-/**
- * @brief Concatena múltiples archivos binarios ordenados en un único archivo de salida.
- * 
- * Esta función simplemente concatena las particiones
- * asumidas como ya ordenadas (por lo visto en Quicksort), ya que
- * los pivotes garantizaron el orden entre bloques.
- *
- * @param partitions Vector con los nombres de los archivos de entrada.
- * @param outputFileName Nombre del archivo de salida resultante.
- * 
- * @return Nombre del archivo generado.
- * 
- * @throws Termina la ejecución si no se puede abrir algún archivo.
- */
 std::string concatenateFiles(const std::vector<std::string> &partitions, const std::string &outputFileName) {
     std::ofstream outputFile(outputFileName, std::ios::binary);
     if (!outputFile) {
@@ -152,50 +117,31 @@ std::string concatenateFiles(const std::vector<std::string> &partitions, const s
         while (inputFile) {
             inputFile.read(buffer.data(), buffer.size());
             std::streamsize bytesRead = inputFile.gcount();
-            if (bytesRead > 0) outputFile.write(buffer.data(), bytesRead);
+            if (bytesRead > 0) {
+                disk_reads++;
+                outputFile.write(buffer.data(), bytesRead);
+                disk_writes++;
+            }
         }
 
         inputFile.close();
-        std::filesystem::remove(partition); // Eliminar archivo temporal
+        std::filesystem::remove(partition);
     }
 
     outputFile.close();
     return outputFileName;
 }
 
-/**
- * @brief Ordena un archivo binario de enteros utilizando QuickSort externo.
- *
- * Si el archivo es lo suficientemente pequeño para caber en memoria, se ordena 
- * completamente en RAM usando una implementación recursiva de QuickSort. 
- * Si es más grande que la RAM disponible, se seleccionan los pivotes aleatorios, 
- * se particiona el archivo y se aplica QuickSort recursivamente sobre cada partición.
- *
- * Finalmente, se concatenan los archivos ya ordenados en un único archivo de salida.
- *
- * @param filename Nombre del archivo a ordenar.
- * @param M Tamaño de la memoria RAM disponible (en MB).
- * @param a Aridad del algoritmo de ordenamiento externo.
- * 
- * @return Nombre del archivo binario resultante con los datos ordenados.
- * 
- * @throws Termina la ejecución si no se puede abrir el archivo de entrada o escritura.
- */
 std::string extQuickSort(const std::string &filename, int M, int a) {
     std::uintmax_t ram = M * 1000000;
     std::uintmax_t fileSize = std::filesystem::file_size(filename);
     size_t numInts = fileSize / sizeof(int64_t);
 
-    //std::cout << "\n Procesando archivo: " << filename 
-    //          << " (" << fileSize / (1024 * 1024) << " MB)\n";
-    // ----------------------------------------------------------------------------------------
-    // Si el tamaño del archivo es menor al de la memoria RAM, se ordena todo en memoria principal
-    // ----------------------------------------------------------------------------------------
     if (fileSize < ram) {
         std::vector<int64_t> buffer(numInts);
         std::fstream inputFile(filename, std::ios::in | std::ios::out | std::ios::binary);
         inputFile.read(reinterpret_cast<char*>(buffer.data()), numInts * sizeof(int64_t));
-
+        disk_reads++;
         auto quickSort = [](auto&& self, std::vector<int64_t>& arr, int left, int right) -> void {
             if (left >= right) return;
             int pivot = arr[(left + right) / 2];
@@ -212,6 +158,7 @@ std::string extQuickSort(const std::string &filename, int M, int a) {
         quickSort(quickSort, buffer, 0, numInts - 1);
         inputFile.seekp(0);
         inputFile.write(reinterpret_cast<char*>(buffer.data()), numInts * sizeof(int64_t));
+        disk_writes++;
         inputFile.close();
         return filename;
     }
