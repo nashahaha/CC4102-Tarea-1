@@ -141,7 +141,7 @@ int ternarySearchOptimalArity(const std::string& filename, int low, int high, in
 }
 
 int main() {
-    const std::string testFilename = "test_60M.bin";
+    const std::string testFilename = "../bin/test_60M.bin";
     const size_t numIntegers = 60000000; // 60M enteros
     const int memoryMB = 50;            // Memoria disponible en MB
 
