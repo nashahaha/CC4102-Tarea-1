@@ -9,10 +9,11 @@
 size_t B_ = 1024; // Tamaño del bloque (número de enteros)
 #define INT_MAX 99999999
 
-// Contadores de accesos a disco, tanto para lectura como escritura
+// Contadores de accesos a disco
 size_t disk_reads = 0;
 size_t disk_writes = 0;
 
+// Selecciona pivotes aleatorios ordenados de una muestra del archivo
 std::vector<int64_t> selectPivots(const std::string &filename, int a) {
     std::ifstream inputFile(filename, std::ios::binary);
     if (!inputFile) {
@@ -59,45 +60,68 @@ std::vector<int64_t> selectPivots(const std::string &filename, int a) {
     return pivots;
 }
 
+// Particiona el archivo de acuerdo a los pivotes usando buffers
 std::vector<std::string> partitionFileQS(const std::string& archivoOriginal, const std::vector<int64_t>& pivots) {
     std::ifstream entrada(archivoOriginal, std::ios::binary);
-    std::vector<std::string> particiones(pivots.size() + 1);
-    std::vector<std::ofstream> partFiles(pivots.size() + 1);
-    std::string baseName = std::filesystem::path(archivoOriginal).stem().string();
-
-    for (size_t i = 0; i <= pivots.size(); ++i) {
-        particiones[i] = "../bin/" + baseName + "_part_" + std::to_string(i) + ".bin";
-        partFiles[i].open(particiones[i], std::ios::binary);
-    }
-
     if (!entrada) {
         std::cerr << "No se pudo abrir el archivo para particionar\n";
         exit(1);
     }
 
+    std::string baseName = std::filesystem::path(archivoOriginal).stem().string();
+    size_t numParts = pivots.size() + 1;
+
+    std::vector<std::string> particiones(numParts);
+    std::vector<std::ofstream> partFiles(numParts);
+    std::vector<std::vector<int64_t>> buffers(numParts); // buffers por partición
+
+    for (size_t i = 0; i < numParts; ++i) {
+        particiones[i] = "../bin/" + baseName + "_part_" + std::to_string(i) + ".bin";
+        partFiles[i].open(particiones[i], std::ios::binary);
+        if (!partFiles[i]) {
+            std::cerr << "No se pudo crear la partición: " << particiones[i] << "\n";
+            exit(1);
+        }
+        buffers[i].reserve(B_);
+    }
+
     std::vector<int64_t> buffer(B_);
     while (entrada) {
         entrada.read(reinterpret_cast<char*>(buffer.data()), B_ * sizeof(int64_t));
-        disk_reads++;
         size_t leidos = entrada.gcount() / sizeof(int64_t);
         if (leidos == 0) break;
+        disk_reads++;
 
         for (size_t i = 0; i < leidos; ++i) {
             int64_t val = buffer[i];
             size_t partIdx = 0;
             while (partIdx < pivots.size() && val > pivots[partIdx]) partIdx++;
-            partFiles[partIdx].write(reinterpret_cast<char*>(&val), sizeof(int64_t));
-            disk_writes++;
+            buffers[partIdx].push_back(val);
+
+            if (buffers[partIdx].size() == B_) {
+                partFiles[partIdx].write(reinterpret_cast<char*>(buffers[partIdx].data()), B_ * sizeof(int64_t));
+                disk_writes++;
+                buffers[partIdx].clear();
+            }
         }
     }
 
-    for (auto& file : partFiles) file.close();
-    entrada.close();
+    // Escribir cualquier resto en los buffers
+    for (size_t i = 0; i < numParts; ++i) {
+        if (!buffers[i].empty()) {
+            partFiles[i].write(reinterpret_cast<char*>(buffers[i].data()), buffers[i].size() * sizeof(int64_t));
+            disk_writes++;
+            buffers[i].clear();
+        }
+        partFiles[i].close();
+    }
 
+    entrada.close();
     std::cout << "Archivo particionado en " << particiones.size() << " partes.\n";
     return particiones;
 }
 
+// Concatena archivos binarios ordenados en uno solo
 std::string concatenateFiles(const std::vector<std::string> &partitions, const std::string &outputFileName) {
     std::ofstream outputFile(outputFileName, std::ios::binary);
     if (!outputFile) {
@@ -118,8 +142,8 @@ std::string concatenateFiles(const std::vector<std::string> &partitions, const s
             inputFile.read(buffer.data(), buffer.size());
             std::streamsize bytesRead = inputFile.gcount();
             if (bytesRead > 0) {
-                disk_reads++;
                 outputFile.write(buffer.data(), bytesRead);
+                disk_reads++;
                 disk_writes++;
             }
         }
@@ -132,19 +156,23 @@ std::string concatenateFiles(const std::vector<std::string> &partitions, const s
     return outputFileName;
 }
 
+// QuickSort externo recursivo
 std::string extQuickSort(const std::string &filename, int M, int a) {
     std::uintmax_t ram = M * 1000000;
     std::uintmax_t fileSize = std::filesystem::file_size(filename);
     size_t numInts = fileSize / sizeof(int64_t);
 
+    // Caso base: cabe en RAM
     if (fileSize < ram) {
         std::vector<int64_t> buffer(numInts);
         std::fstream inputFile(filename, std::ios::in | std::ios::out | std::ios::binary);
         inputFile.read(reinterpret_cast<char*>(buffer.data()), numInts * sizeof(int64_t));
         disk_reads++;
+
+        // QuickSort in-place
         auto quickSort = [](auto&& self, std::vector<int64_t>& arr, int left, int right) -> void {
             if (left >= right) return;
-            int pivot = arr[(left + right) / 2];
+            int64_t pivot = arr[(left + right) / 2];
             int i = left, j = right;
             while (i <= j) {
                 while (arr[i] < pivot) ++i;
@@ -163,6 +191,7 @@ std::string extQuickSort(const std::string &filename, int M, int a) {
         return filename;
     }
 
+    // Caso recursivo
     std::vector<int64_t> pivots = selectPivots(filename, a);
     std::vector<std::string> partitions = partitionFileQS(filename, pivots);
 
@@ -174,6 +203,4 @@ std::string extQuickSort(const std::string &filename, int M, int a) {
     std::string sortedFile = "../bin/sorted_" + std::filesystem::path(filename).filename().string();
     return concatenateFiles(sortedPartitions, sortedFile);
 }
-
-
 
