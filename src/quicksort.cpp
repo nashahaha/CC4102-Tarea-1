@@ -6,7 +6,7 @@
 #include <random>
 #include <string>
 
-size_t B = 1024; // Se asume que el bloque es de tamaño 4KB, por ahora
+size_t B_ = 1024; // Se asume que el bloque es de tamaño 4KB, por ahora
 #define INT_MAX 99999999
 
 
@@ -40,11 +40,11 @@ std::vector<int> selectPivots(const std::string &filename, int a) {
     std::uniform_int_distribution<size_t> dist(0, numInts - 1);
 
     size_t randomPos = dist(gen);
-    size_t blockPos = (randomPos / B) * B * sizeof(int);
+    size_t blockPos = (randomPos / B_) * B_ * sizeof(int);
 
     inputFile.seekg(blockPos, std::ios::beg);
-    std::vector<int> buffer(B);
-    inputFile.read(reinterpret_cast<char*>(buffer.data()), B * sizeof(int));
+    std::vector<int> buffer(B_);
+    inputFile.read(reinterpret_cast<char*>(buffer.data()), B_ * sizeof(int));
     size_t readCount = inputFile.gcount() / sizeof(int);
     buffer.resize(readCount);
 
@@ -98,9 +98,9 @@ std::vector<std::string> partitionFileQS(const std::string& archivoOriginal, con
         exit(1);
     }
 
-    std::vector<int> buffer(B);
+    std::vector<int> buffer(B_);
     while (entrada) {
-        entrada.read(reinterpret_cast<char*>(buffer.data()), B * sizeof(int));
+        entrada.read(reinterpret_cast<char*>(buffer.data()), B_ * sizeof(int));
         size_t leidos = entrada.gcount() / sizeof(int);
         if (leidos == 0) break;
 
@@ -140,7 +140,7 @@ std::string concatenateFiles(const std::vector<std::string> &partitions, const s
         exit(1);
     }
 
-    std::vector<char> buffer(B * sizeof(int));
+    std::vector<char> buffer(B_ * sizeof(int));
 
     for (const auto &partition : partitions) {
         std::ifstream inputFile(partition, std::ios::binary);
