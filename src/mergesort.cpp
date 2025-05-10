@@ -25,7 +25,7 @@ struct Part {
     int id; //util para debuggear
     std::string filename;
     std::ifstream* fileStr;
-    std::vector<int> buffer;
+    std::vector<int64_t> buffer;
     int bufferSize;
   };
 
@@ -70,7 +70,7 @@ std::string mergeFiles(std::vector<std::string> partitions, const std::string &o
             std::exit(1);
         }
 
-        std::vector<int> buff(B); 
+        std::vector<int64_t> buff(B); 
         p.buffer = buff;
         p.bufferSize = 0;
         parts.push_back(p);
@@ -78,7 +78,7 @@ std::string mergeFiles(std::vector<std::string> partitions, const std::string &o
 
     std::vector<Part> partsToRead = parts; // Arreglo con todos los archivos que aún tienen números por leer
     
-    std::vector<int> outputBuffer;
+    std::vector<int64_t> outputBuffer;
     std::ofstream outputFile(outputFileName, std::ios::binary); // Se abre el archivo de salida 
     int outBuffSize=0;  // Tamaño del buffer de salida
 
@@ -92,9 +92,9 @@ std::string mergeFiles(std::vector<std::string> partitions, const std::string &o
 
             if (p.bufferSize == 0 && p.fileStr->peek()!=EOF) {
                 p.buffer.resize(B);
-                p.fileStr->read(reinterpret_cast<char*>(p.buffer.data()), B * sizeof(int));
+                p.fileStr->read(reinterpret_cast<char*>(p.buffer.data()), B * sizeof(int64_t));
                 std::streamsize bytesRead1 = p.fileStr->gcount(); // entrega la cantidad de bytes efectivamenete leidos en la última operación
-                p.bufferSize = bytesRead1 / sizeof(int);
+                p.bufferSize = bytesRead1 / sizeof(int64_t);
                 p.buffer.resize(p.bufferSize);
             }
         }
@@ -116,7 +116,7 @@ std::string mergeFiles(std::vector<std::string> partitions, const std::string &o
         // ----------------------------------------------------------------------------------------
         bool are_buff_non_empty = true;
         while(are_buff_non_empty){ 
-            int min_value = INT_MAX;
+            int64_t min_value = INT_MAX;
             int min_index = -1;
 
             for (size_t i = 0; i < partsToRead.size(); ++i) {
@@ -134,7 +134,7 @@ std::string mergeFiles(std::vector<std::string> partitions, const std::string &o
 
             // Si el buffer del archivo de salida se llena, se escribe en el archivo
             if (outBuffSize == B) {
-                outputFile.write(reinterpret_cast<char*>(outputBuffer.data()), outputBuffer.size() * sizeof(int));
+                outputFile.write(reinterpret_cast<char*>(outputBuffer.data()), outputBuffer.size() * sizeof(int64_t));
                 outputBuffer.clear();
                 outBuffSize = 0;   
             } 
@@ -162,15 +162,15 @@ std::string mergeFiles(std::vector<std::string> partitions, const std::string &o
     while (true){
         if (p.bufferSize==0){
             p.buffer.resize(B);
-            p.fileStr->read(reinterpret_cast<char*>(p.buffer.data()), B * sizeof(int));
-            p.bufferSize = p.fileStr->gcount() / sizeof(int);
+            p.fileStr->read(reinterpret_cast<char*>(p.buffer.data()), B * sizeof(int64_t));
+            p.bufferSize = p.fileStr->gcount() / sizeof(int64_t);
             p.buffer.resize(p.bufferSize);
 
             if (p.bufferSize == 0) break; // Si no se ha llenado significa que no quedan más datos que sacar
             
         }
 
-        int k = p.buffer.front(); 
+        int64_t k = p.buffer.front(); 
         p.buffer.erase(p.buffer.begin());
         p.bufferSize--;
 
@@ -179,7 +179,7 @@ std::string mergeFiles(std::vector<std::string> partitions, const std::string &o
 
 
         if (outBuffSize == B) {
-            outputFile.write(reinterpret_cast<char*>(outputBuffer.data()), B * sizeof(int));
+            outputFile.write(reinterpret_cast<char*>(outputBuffer.data()), B * sizeof(int64_t));
             outputBuffer.clear();
             outBuffSize = 0;
         } 
@@ -190,7 +190,7 @@ std::string mergeFiles(std::vector<std::string> partitions, const std::string &o
     // Agrega el ultimo bloque que queda (que no es necesariamente de tamaño B)
     // ----------------------------------------------------------------------------------------
     if (!outputBuffer.empty()) { 
-        outputFile.write(reinterpret_cast<char*>(outputBuffer.data()), outputBuffer.size() * sizeof(int));
+        outputFile.write(reinterpret_cast<char*>(outputBuffer.data()), outputBuffer.size() * sizeof(int64_t));
         outputBuffer.clear();
     }
 
@@ -241,14 +241,14 @@ std::vector<std::string> partitionFile(const std::string& filename, int a, int M
     entrada.seekg(0, std::ios::beg);
 
 
-    size_t totalInts = tamanoBytes / sizeof(int);
+    size_t totalInts = tamanoBytes / sizeof(int64_t);
 
     // Cantidad de ints por parte, con reparto del sobrante
     size_t intsPorParte = totalInts / a;
     size_t resto = totalInts % a;
 
     // Cantidad máxima de ints que caben en M megabytes
-    size_t maxIntsEnMemoria = (M * 1024 * 1024) / sizeof(int);
+    size_t maxIntsEnMemoria = (M * 1024 * 1024) / sizeof(int64_t);
 
     std::string baseName = std::filesystem::path(filename).stem().string();
 
@@ -264,14 +264,14 @@ std::vector<std::string> partitionFile(const std::string& filename, int a, int M
 
         while (cantidad > 0) {
             size_t bloque = std::min(cantidad, maxIntsEnMemoria);
-            std::vector<int> buffer(bloque);
+            std::vector<int64_t> buffer(bloque);
 
-            entrada.read(reinterpret_cast<char*>(buffer.data()), bloque * sizeof(int));
-            std::streamsize leidos = entrada.gcount() / sizeof(int);
+            entrada.read(reinterpret_cast<char*>(buffer.data()), bloque * sizeof(int64_t));
+            std::streamsize leidos = entrada.gcount() / sizeof(int64_t);
 
             if (leidos == 0) break;
 
-            salida.write(reinterpret_cast<char*>(buffer.data()), leidos * sizeof(int));
+            salida.write(reinterpret_cast<char*>(buffer.data()), leidos * sizeof(int64_t));
             cantidad -= leidos;
         }
 
@@ -306,13 +306,13 @@ std::vector<std::string> partitionFile(const std::string& filename, int a, int M
 std::string extMergeSort(const std::string &filename, int M, int a){
     std::uintmax_t ram = M*1000000; // Memoria ram en bytes
     std::uintmax_t fileSize = std::filesystem::file_size(filename); // Se determina el tamaño del archivo
-    size_t numInts = fileSize / sizeof(int);    
+    size_t numInts = fileSize / sizeof(int64_t);    
 
     // ----------------------------------------------------------------------------------------
     // Si el tamaño del archivo es menor al de la memoria RAM, se ordena todo en memoria principal
     // ----------------------------------------------------------------------------------------
     if(fileSize<ram){
-        std::vector<int> buffer(numInts); // Se inicializa un vector del tamaño del archivo
+        std::vector<int64_t> buffer(numInts); // Se inicializa un vector del tamaño del archivo
         
         std::fstream inputFile(filename, std::ios::in | std::ios::out | std::ios::binary); 
 
@@ -321,15 +321,15 @@ std::string extMergeSort(const std::string &filename, int M, int a){
             std::exit(1);
         }
 
-        inputFile.read(reinterpret_cast<char*>(buffer.data()), numInts * sizeof(int)); // Se lee el archivo completo en el buffer
+        inputFile.read(reinterpret_cast<char*>(buffer.data()), numInts * sizeof(int64_t)); // Se lee el archivo completo en el buffer
         
         std::sort (buffer.begin(), buffer.end()); // Se ordena
         
         // Se sobrescribe el arreglo ordenado en el mismo archivo
         inputFile.seekp(0); // Vuelve al principio
-        inputFile.write(reinterpret_cast<char*>(buffer.data()), numInts * sizeof(int));
+        inputFile.write(reinterpret_cast<char*>(buffer.data()), numInts * sizeof(int64_t));
 
-        std::cout << "Se ordenó " << filename << "\n";
+        //std::cout << "Se ordenó " << filename << "\n";
         return filename;
     }
 
@@ -354,7 +354,7 @@ std::string extMergeSort(const std::string &filename, int M, int a){
     for(auto& part: sortedPart){ 
         std::remove(part.c_str());
     }
-    std::cout << "------------------------Se creó el archivo ordenado " << orderedFileName << ":) ------------------------\n";
+    std::cout << "----Se creó el archivo ordenado " << orderedFileName << " :) ----\n";
 
     return orderedFile;
 }
