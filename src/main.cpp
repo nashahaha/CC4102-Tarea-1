@@ -53,3 +53,13 @@ void runExperiment(const std::string& filename, size_t size, int min, int max, i
 }
 
 
+int main(){
+    //primer experimento con 25.000.000 de enteros = 200 MB = 4M
+    runExperiment("../bin/unsorted9.bin", 25000000, -6000000, 1000000, 50, 5);
+
+    //segundo experimento con 50.000.000 de enteros = 400 MB = 8M
+    runExperiment("../bin/unsorted10.bin", 50000000, -6000000, 1000000, 50, 5);
+
+
+    return 1;
+}
