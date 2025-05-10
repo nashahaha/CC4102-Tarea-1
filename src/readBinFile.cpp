@@ -42,15 +42,4 @@ void readBinFile(const std::string &filename){
     std::cout << "\n";
 }
 
-int main(int argc, char* argv[]) {
 
-    if (argc < 2) {
-        std::cerr << "Usage: " << argv[0] << " <binary_file.bin>\n";
-        return 1;
-    }
-    
-    std::string filename = argv[1];
-    readBinFile(filename);
-
-    return 0;
-}
