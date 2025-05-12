@@ -3,7 +3,7 @@
 #include <string>
 
 /*
-Dice si  un archivo binario de enteros está ordenado.
+Dice si un archivo binario de enteros está ordenado.
 
 Para usar compilar con: g++ isBinSorted.cpp -o ex/isSorted
 
