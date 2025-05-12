@@ -1,18 +1,15 @@
+#include "aridad.h"       // Incluir el encabezado de aridad
+#include "mergesort.h"    // Incluir el encabezado de mergesort
 #include <iostream>
 #include <fstream>
 #include <vector>
 #include <string>
 #include <cmath>
 #include <limits>
-#include <cstdint>
 #include <random>
 #include <chrono>
 #include <algorithm>
 #include <filesystem>
-#include "mergesort.h" // Incluir el encabezado de mergesort
-
-// Tamaño del bloque en bytes (4KB por defecto)
-const size_t BLOCK_SIZE = 4096;
 
 // Clase para contar accesos a disco
 class DiskAccessCounter {
