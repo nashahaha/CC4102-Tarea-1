@@ -9,6 +9,7 @@
 #include <chrono>
 #include <algorithm>
 #include <filesystem>
+#include "mergesort.h" // Incluir el encabezado de mergesort
 
 // Tamaño del bloque en bytes (4KB por defecto)
 const size_t BLOCK_SIZE = 4096;
@@ -18,39 +19,19 @@ class DiskAccessCounter {
 private:
     size_t readAccesses;
     size_t writeAccesses;
-    
+
 public:
     DiskAccessCounter() : readAccesses(0), writeAccesses(0) {}
-    
+
     void incrementRead() { readAccesses++; }
     void incrementWrite() { writeAccesses++; }
-    
+
     size_t getReadAccesses() const { return readAccesses; }
     size_t getWriteAccesses() const { return writeAccesses; }
     size_t getTotalAccesses() const { return readAccesses + writeAccesses; }
-    
+
     void reset() { readAccesses = 0; writeAccesses = 0; }
 };
-
-// Función simulada de Mergesort externo 
-std::string extMergeSort(const std::string& inputFile, int memoryMB, int arity, DiskAccessCounter& counter) {
-    // Simulación: cada operación de lectura/escritura incrementa el contador
-    // En una implementación real, esto se haría en las operaciones reales de I/O
-    
-    // Simulamos que el número de accesos depende de la aridad de forma unimodal
-    // Para esta simulación, asumimos un mínimo alrededor de arity = 50
-    size_t simulatedAccesses = 1000000 + (arity - 50) * (arity - 50) * 100;
-    
-    // Actualizamos el contador con el valor simulado
-    counter.reset();
-    for (size_t i = 0; i < simulatedAccesses/2; ++i) {
-        counter.incrementRead();
-        counter.incrementWrite();
-    }
-    
-    // Devolvemos un nombre de archivo temporal
-    return "sorted_" + std::to_string(arity) + ".bin";
-}
 
 // Genera un archivo binario con N enteros desordenados
 void generateTestFile(const std::string& filename, size_t numIntegers) {
@@ -62,8 +43,8 @@ void generateTestFile(const std::string& filename, size_t numIntegers) {
 
     // Inicializar generador de números aleatorios
     std::mt19937 gen(std::random_device{}());
-    std::uniform_int_distribution<int64_t> dist(std::numeric_limits<int64_t>::min(), 
-                                              std::numeric_limits<int64_t>::max());
+    std::uniform_int_distribution<int64_t> dist(std::numeric_limits<int64_t>::min(),
+                                                std::numeric_limits<int64_t>::max());
 
     for (size_t i = 0; i < numIntegers; ++i) {
         int64_t value = dist(gen);
@@ -88,47 +69,47 @@ size_t evaluateArity(const std::string& filename, int arity, int memoryMB) {
     dst << src.rdbuf();
     src.close();
     dst.close();
-    
+
     // Ejecutar Mergesort externo y medir accesos a disco
     DiskAccessCounter counter;
-    std::string sortedFile = extMergeSort(tempInput, memoryMB, arity, counter);
-    
+    std::string sortedFile = extMergeSort(tempInput, memoryMB, arity); // Usar la implementación real
+
     // Limpiar archivos temporales
     std::remove(tempInput.c_str());
     std::remove(sortedFile.c_str());
-    
+
     return counter.getTotalAccesses();
 }
 
 // Búsqueda ternaria para encontrar la aridad óptima
 int ternarySearchOptimalArity(const std::string& filename, int low, int high, int memoryMB) {
     const int MIN_INTERVAL_SIZE = 5; // Cuando el intervalo es pequeño, evaluamos todos los valores
-    
+
     while (high - low > MIN_INTERVAL_SIZE) {
         int m1 = low + (high - low) / 3;
         int m2 = high - (high - low) / 3;
-        
+
         std::cout << "Evaluando aridades: " << m1 << " y " << m2 << "\n";
-        
+
         size_t accesses_m1 = evaluateArity(filename, m1, memoryMB);
         size_t accesses_m2 = evaluateArity(filename, m2, memoryMB);
-        
-        std::cout << "Accesos para a=" << m1 << ": " << accesses_m1 
+
+        std::cout << "Accesos para a=" << m1 << ": " << accesses_m1
                   << ", a=" << m2 << ": " << accesses_m2 << "\n";
-        
+
         if (accesses_m1 < accesses_m2) {
             high = m2 - 1;
         } else {
             low = m1 + 1;
         }
     }
-    
+
     // Evaluar todos los valores en el intervalo pequeño final
     std::cout << "Evaluando valores finales entre " << low << " y " << high << "\n";
-    
+
     int bestArity = low;
     size_t minAccesses = evaluateArity(filename, low, memoryMB);
-    
+
     for (int a = low + 1; a <= high; ++a) {
         size_t currentAccesses = evaluateArity(filename, a, memoryMB);
         if (currentAccesses < minAccesses) {
@@ -136,7 +117,7 @@ int ternarySearchOptimalArity(const std::string& filename, int low, int high, in
             bestArity = a;
         }
     }
-    
+
     return bestArity;
 }
 
@@ -161,10 +142,10 @@ int main() {
     // Encontrar la aridad óptima usando búsqueda ternaria
     std::cout << "\nIniciando búsqueda ternaria para encontrar la aridad óptima...\n";
     int optimalA = ternarySearchOptimalArity(testFilename, 2, maxArity, memoryMB);
-    
+
     // Evaluar la aridad óptima para confirmar
     size_t finalAccesses = evaluateArity(testFilename, optimalA, memoryMB);
-    std::cout << "\nLa aridad óptima encontrada es: " << optimalA 
+    std::cout << "\nLa aridad óptima encontrada es: " << optimalA
               << " con " << finalAccesses << " accesos a disco\n";
 
     return 0;
