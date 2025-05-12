@@ -4,7 +4,6 @@ Para el desarrollo de está tarea, se creó los siguiente archivos en el lenguaj
 
 1) quicksort.cpp: código que contiene la lógica del algoritmo de Quicksort externo
 2) mergesort.cpp: código que contiene la lógica del algoritmo de Mergesort externo
-3) aridad.cpp: código que permite hacer el cálculo de la aridad óptima a para Mergesort externo (un valor importante para la experimentación)
 4) createarray.cpp: código para crear un archivo binario con un arreglo de enteros aleatorios.
 5) makeSortedBin.cpp: código para crear un archivo binario con un arreglo ordenado.
 6) makeUnsortedBin.cpp: código para crear un archivo binario con un arreglo desordenado.
