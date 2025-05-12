@@ -32,7 +32,7 @@ public:
     void reset() { readAccesses = 0; writeAccesses = 0; }
 };
 
-// Función simulada de Mergesort externo (debes reemplazarla con tu implementación real)
+// Función simulada de Mergesort externo 
 std::string extMergeSort(const std::string& inputFile, int memoryMB, int arity, DiskAccessCounter& counter) {
     // Simulación: cada operación de lectura/escritura incrementa el contador
     // En una implementación real, esto se haría en las operaciones reales de I/O
